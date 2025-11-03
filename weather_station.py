@@ -26,7 +26,7 @@ class WeatherStation:
     def __init__(self):
         """Initialize the weather station"""
         self.config = Config()
-        self.weather_api = WeatherAPI(self.config.latitude, self.config.longitude, self.config.city)
+        self.weather_api = WeatherAPI(self.config.latitude, self.config.longitude)
         self.display = DisplayManager()
         logger.info("Weather Station initialized")
     
@@ -34,7 +34,7 @@ class WeatherStation:
         """Fetch weather data and update the display"""
         try:
             # Fetch current weather data
-            weather_data = self.weather_api.get_current_weather()
+            weather_data = self.weather_api.get_weather_data()
             if weather_data:
                 # Update the display with new data
                 self.display.show_weather(weather_data)

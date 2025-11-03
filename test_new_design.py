@@ -50,10 +50,13 @@ def main():
     try:
         image = display.create_weather_image(sample_weather_data)
         
+        # Rotate the image 180 degrees
+        image = image.rotate(180)
+        
         # Save the image for preview
         output_file = 'weather_display_new_design.png'
         image.save(output_file)
-        print(f"\n✓ New design preview saved as: {output_file}")
+        print(f"\n✓ New design preview saved as: {output_file} (rotated 180°)")
         print("  Open this file to see the improved interface!")
         
         # Test different weather conditions with enhanced icons
@@ -75,9 +78,11 @@ def main():
             })
             
             image_test = display.create_weather_image(test_data)
+            # Rotate 180 degrees
+            image_test = image_test.rotate(180)
             output_file_test = f'weather_display_{condition["name"]}.png'
             image_test.save(output_file_test)
-            print(f"✓ {condition['description']} preview saved as: {output_file_test}")
+            print(f"✓ {condition['description']} preview saved as: {output_file_test} (rotated 180°)")
         
     except Exception as e:
         print(f"✗ Error creating weather image: {e}")

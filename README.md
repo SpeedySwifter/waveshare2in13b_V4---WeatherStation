@@ -15,10 +15,11 @@ A weather station for Raspberry Pi Zero 2 with Waveshare 2.13" V4 E-Ink Display 
 
 ## Hardware Requirements
 
-- Raspberry Pi Zero 2 W
-- Waveshare 2.13inch e-Paper HAT V4
-- MicroSD Card (16GB+)
-- Power Supply (USB-C)
+- **Raspberry Pi Zero 2 W**
+- **Waveshare 2.13inch e-Paper HAT V4** (Black/White display)
+- **MicroSD Card** (16GB+ recommended, Class 10)
+- **Power Supply** (Micro-USB, 5V/2.5A minimum recommended)
+- **Internet Connection** (Wi-Fi for weather data)
 
 ## Display Layout
 
@@ -43,21 +44,23 @@ The 2.13" display (250x122 pixels) features a modern, clean design with:
   - 🧭 **Wind direction** in degrees
 
 ### **Design Features**
-- **Professional SVG weather icons** with ASCII art fallback
+- **Professional PNG weather icons** with ASCII art fallback
 - **Merriweather Sans typography** with multiple font weights
 - **Day/night weather variations** (sun/moon based on time)
 - **Typography hierarchy** with proper font weights (light, regular, medium, semibold, bold)
 - **Decorative corner elements**
 - **Clean borders and separators**
 - **Optimized for e-ink display** (black/white only)
+- **No external dependencies** for icons (PNG format)
 
 ### **Weather Icons**
-The system uses high-quality SVG icons from the `icons/` folder:
+The system uses high-quality PNG icons from the `icons png/` folder:
 - **Clear sky**: Different icons for day (sun) and night (moon)
 - **Cloudy conditions**: Various cloud densities (1-3 levels)
 - **Precipitation**: Rain, snow, and mixed conditions
 - **Special weather**: Fog, thunderstorms, severe weather
-- **Automatic fallback**: ASCII art if SVG support unavailable
+- **No dependencies**: PNG format works everywhere
+- **Automatic fallback**: ASCII art if icons unavailable
 
 ### **Typography**
 Professional Merriweather Sans font family with multiple weights:
@@ -235,9 +238,9 @@ python3 test_new_design.py
 ```
 
 ### install_svg_support.sh
-Install SVG icon support (optional for better icons):
+~~Install SVG icon support~~ (No longer needed - PNG icons used):
 ```bash
-bash install_svg_support.sh
+# bash install_svg_support.sh  # Not needed anymore
 ```
 
 ### health_check.sh
@@ -260,9 +263,9 @@ weather-station/
 ├── setup.sh                   # Automatic setup
 ├── ssh_fix.sh                 # SSH configuration fix for Pi Zero 2
 ├── test_new_design.py         # Design preview generator
-├── install_svg_support.sh     # SVG icon support installer
+├── install_svg_support.sh     # SVG icon support installer (legacy)
 ├── health_check.sh           # Status monitoring
-├── icons/                    # SVG weather icon assets
+├── icons png/                # PNG weather icon assets
 ├── Merriweather_Sans/        # Professional font family
 ├── waveshare_epd/            # Display drivers
 ├── README.md                 # English documentation

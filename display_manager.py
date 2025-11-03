@@ -9,16 +9,7 @@ from datetime import datetime
 import os
 import sys
 
-# Try to import cairosvg for SVG rendering
-try:
-    import cairosvg
-    SVG_SUPPORT = True
-except (ImportError, OSError) as e:
-    SVG_SUPPORT = False
-    # Only log warning if we're on a Raspberry Pi (where SVG support is expected)
-    if 'arm' in os.uname().machine.lower() or os.path.exists('/proc/cpuinfo'):
-        logging.warning(f"cairosvg not available - SVG icons will fallback to ASCII art: {e}")
-    # On development machines (Mac/Windows), this is expected
+# PNG icons are used - no Cairo/SVG dependencies needed!
 
 # Add the waveshare_epd directory to the path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'waveshare_epd'))
@@ -39,12 +30,30 @@ class DisplayManager:
         self.height = 122
         self.epd = None
         
-        # Set up icons directory
-        self.icons_dir = os.path.join(os.path.dirname(__file__), 'icons')
+        # Set up icons directory (Visual Crossing Weather Icons - 3rd Set)
+        base_dir = os.path.dirname(__file__)
+        candidate_icon_dirs = [
+            os.path.join(base_dir, 'visual_crossing_icons'),
+            os.path.join(base_dir, '3rd Set - Monochrome')
+        ]
+
+        self.icons_dir = None
+        for icon_dir in candidate_icon_dirs:
+            if os.path.isdir(icon_dir):
+                self.icons_dir = icon_dir
+                break
+
+        if not self.icons_dir:
+            # Default to the first directory and warn when icons are missing
+            self.icons_dir = candidate_icon_dirs[0]
+            logger.warning(
+                "No weather icon directory found. Expected one of: %s", candidate_icon_dirs
+            )
+
         self.icon_cache = {}  # Cache for loaded icons
         
-        # Set up fonts directory
-        self.fonts_dir = os.path.join(os.path.dirname(__file__), 'Merriweather_Sans')
+        # Set up fonts directory (Lato fonts)
+        self.fonts_dir = os.path.join(os.path.dirname(__file__), 'Lato')
         self.font_cache = {}  # Cache for loaded fonts
         
         # Initialize the e-paper display if available
@@ -106,32 +115,32 @@ class DisplayManager:
             return False
     
     def get_font(self, size=12, weight='regular', italic=False):
-        """Get Merriweather Sans font with specified weight and style"""
+        """Get Lato font with specified weight and style"""
         cache_key = f"{size}_{weight}_{italic}"
         if cache_key in self.font_cache:
             return self.font_cache[cache_key]
         
-        # Map weight names to font files
+        # Map weight names to font files (Lato naming convention)
         weight_mapping = {
             'light': 'Light',
             'regular': 'Regular', 
-            'medium': 'Medium',
-            'semibold': 'SemiBold',
+            'medium': 'Regular',  # Lato doesn't have Medium, use Regular
+            'semibold': 'Bold',   # Lato doesn't have SemiBold, use Bold
             'bold': 'Bold',
-            'extrabold': 'ExtraBold'
+            'extrabold': 'Black'  # Lato uses Black for extra bold
         }
         
-        # Build font filename
+        # Build font filename (Lato naming convention)
         weight_name = weight_mapping.get(weight.lower(), 'Regular')
         italic_suffix = 'Italic' if italic else ''
-        font_filename = f"MerriweatherSans-{weight_name}{italic_suffix}.ttf"
+        font_filename = f"Lato-{weight_name}{italic_suffix}.ttf"
         
-        # Try Merriweather Sans fonts first
-        merriweather_paths = [
+        # Try Lato fonts first
+        lato_paths = [
+            os.path.join(self.fonts_dir, font_filename),
+            # Alternative paths for Lato
             os.path.join(self.fonts_dir, 'static', font_filename),
-            # Variable font fallback
-            os.path.join(self.fonts_dir, 'MerriweatherSans-VariableFont_wght.ttf'),
-            os.path.join(self.fonts_dir, 'MerriweatherSans-Italic-VariableFont_wght.ttf') if italic else None
+            os.path.join(self.fonts_dir, f'Lato-Regular.ttf')  # Fallback to Regular
         ]
         
         # System font fallbacks
@@ -145,7 +154,7 @@ class DisplayManager:
         ]
         
         # Try all font paths
-        all_paths = [p for p in merriweather_paths if p] + system_font_paths
+        all_paths = [p for p in lato_paths if p] + system_font_paths
         
         for font_path in all_paths:
             try:
@@ -161,37 +170,43 @@ class DisplayManager:
         return default_font
     
     def get_weather_icon_filename(self, weather_code, is_day=True):
-        """Get weather icon filename based on weather code"""
-        # Map weather codes to icon filenames
+        """Get weather icon filename based on weather code (Visual Crossing 3rd Set)"""
+        # Map weather codes to Visual Crossing Weather Icons 3rd Set filenames
         icon_mapping = {
-            # Clear sky
-            0: "clear-day.svg" if is_day else "clear-night.svg",
-            # Mainly clear
-            1: "cloudy-1-day.svg" if is_day else "cloudy-1-night.svg",
-            # Partly cloudy
-            2: "cloudy-2-day.svg" if is_day else "cloudy-2-night.svg",
-            3: "cloudy-3-day.svg" if is_day else "cloudy-3-night.svg",
-            # Overcast
-            45: "fog-day.svg" if is_day else "fog-night.svg",  # Fog
-            48: "fog-day.svg" if is_day else "fog-night.svg",  # Depositing rime fog
-            # Drizzle
-            51: "rainy-1-day.svg" if is_day else "rainy-1-night.svg",
-            53: "rainy-2-day.svg" if is_day else "rainy-2-night.svg",
-            55: "rainy-3-day.svg" if is_day else "rainy-3-night.svg",
-            # Rain
-            61: "rainy-1-day.svg" if is_day else "rainy-1-night.svg",
-            63: "rainy-2-day.svg" if is_day else "rainy-2-night.svg",
-            65: "rainy-3-day.svg" if is_day else "rainy-3-night.svg",
-            # Snow
-            71: "snowy-1-day.svg" if is_day else "snowy-1-night.svg",
-            73: "snowy-2-day.svg" if is_day else "snowy-2-night.svg",
-            75: "snowy-3-day.svg" if is_day else "snowy-3-night.svg",
-            # Thunderstorm
-            95: "thunderstorms.svg",
-            96: "scattered-thunderstorms-day.svg" if is_day else "scattered-thunderstorms-night.svg",
-            99: "severe-thunderstorm.svg"
+            0: ("clear-day.png", "clear-night.png"),
+            1: ("partly-cloudy-day.png", "partly-cloudy-night.png"),
+            2: ("partly-cloudy-day.png", "partly-cloudy-night.png"),
+            3: ("cloudy.png", "cloudy.png"),
+            45: ("fog.png", "fog.png"),
+            48: ("fog.png", "fog.png"),
+            51: ("showers-day.png", "showers-night.png"),
+            53: ("showers-day.png", "showers-night.png"),
+            55: ("showers-day.png", "showers-night.png"),
+            56: ("sleet.png", "sleet.png"),
+            57: ("sleet.png", "sleet.png"),
+            61: ("rain.png", "rain.png"),
+            63: ("rain.png", "rain.png"),
+            65: ("rain.png", "rain.png"),
+            66: ("rain-snow.png", "rain-snow.png"),
+            67: ("rain-snow.png", "rain-snow.png"),
+            68: ("rain-snow.png", "rain-snow.png"),
+            69: ("rain-snow.png", "rain-snow.png"),
+            71: ("snow.png", "snow.png"),
+            73: ("snow.png", "snow.png"),
+            75: ("snow.png", "snow.png"),
+            77: ("snow.png", "snow.png"),
+            80: ("showers-day.png", "showers-night.png"),
+            81: ("showers-day.png", "showers-night.png"),
+            82: ("showers-day.png", "showers-night.png"),
+            85: ("snow-showers-day.png", "snow-showers-night.png"),
+            86: ("snow-showers-day.png", "snow-showers-night.png"),
+            95: ("thunder-showers-day.png", "thunder-showers-night.png"),
+            96: ("hail.png", "hail.png"),
+            99: ("hail.png", "hail.png"),
         }
-        return icon_mapping.get(weather_code, "cloudy.svg")
+
+        day_icon, night_icon = icon_mapping.get(weather_code, ("cloudy.png", "cloudy.png"))
+        return day_icon if is_day else night_icon
     
     def get_weather_icon_fallback(self, weather_code, is_day=True):
         """Get fallback Unicode weather icon symbol"""
@@ -208,11 +223,8 @@ class DisplayManager:
         }
         return weather_icons.get(weather_code, "⛅")
     
-    def load_svg_icon(self, filename, size=(40, 40)):
-        """Load and convert SVG icon to PIL Image"""
-        if not SVG_SUPPORT:
-            return None
-            
+    def load_png_icon(self, filename, size=(40, 40)):
+        """Load and process PNG icon for e-ink display"""
         cache_key = f"{filename}_{size[0]}x{size[1]}"
         if cache_key in self.icon_cache:
             return self.icon_cache[cache_key]
@@ -223,36 +235,33 @@ class DisplayManager:
             return None
             
         try:
-            # Convert SVG to PNG in memory
-            png_data = cairosvg.svg2png(
-                url=icon_path,
-                output_width=size[0],
-                output_height=size[1]
-            )
+            # Load PNG image
+            icon_image = Image.open(icon_path)
             
-            # Load PNG data into PIL Image
-            from io import BytesIO
-            icon_image = Image.open(BytesIO(png_data))
+            # Resize if needed
+            if icon_image.size != size:
+                icon_image = icon_image.resize(size, Image.Resampling.LANCZOS)
             
             # Convert to grayscale and then to 1-bit for e-ink
             icon_image = icon_image.convert('L')  # Grayscale
             
             # Apply threshold to convert to black/white
+            # For Visual Crossing icons (black symbols on white background)
             threshold = 128
-            icon_image = icon_image.point(lambda x: 0 if x < threshold else 255, mode='1')
+            icon_image = icon_image.point(lambda x: 0 if x < threshold else 255, mode='1')  # Keep black symbols
             
             # Cache the processed image
             self.icon_cache[cache_key] = icon_image
             return icon_image
             
         except Exception as e:
-            logger.error(f"Error loading SVG icon {filename}: {e}")
+            logger.error(f"Error loading PNG icon {filename}: {e}")
             return None
     
     def draw_weather_icon_art(self, draw, x, y, weather_code, is_day=True, size="small"):
         """Draw custom ASCII art weather icons"""
-        font_small = self.get_font(8, weight='regular')
-        font_tiny = self.get_font(6, weight='light')
+        font_small = self.get_font(10, weight='regular')  # 12 → 10 (-2)
+        font_tiny = self.get_font(8, weight='light')      # 10 → 8 (-2)
         
         if size == "large":
             # Large ASCII art icons for main weather display
@@ -335,56 +344,9 @@ class DisplayManager:
             draw.text((x, y), icon, font=font_small, fill=0)
     
     def draw_detail_icons(self, draw, x, y, icon_type):
-        """Draw custom icons for weather details"""
-        font_small = self.get_font(8, weight='regular')
-        
-        icons = {
-            'humidity': {
-                'symbol': '💧',
-                'ascii': [
-                    " ● ",
-                    "●●●",
-                    " ● "
-                ]
-            },
-            'pressure': {
-                'symbol': '📊',
-                'ascii': [
-                    "█  ",
-                    "██ ",
-                    "███"
-                ]
-            },
-            'wind': {
-                'symbol': '💨',
-                'ascii': [
-                    "~~~",
-                    ">> ",
-                    "~~~"
-                ]
-            },
-            'direction': {
-                'symbol': '🧭',
-                'ascii': [
-                    " ↑ ",
-                    "←●→",
-                    " ↓ "
-                ]
-            }
-        }
-        
-        if icon_type in icons:
-            # Try Unicode symbol first
-            try:
-                draw.text((x, y), icons[icon_type]['symbol'], font=font_small, fill=0)
-                return 15  # Width for Unicode symbol
-            except:
-                # Fallback to ASCII art
-                for i, line in enumerate(icons[icon_type]['ascii']):
-                    draw.text((x, y + i * 3), line, font=self.get_font(6, weight='light'), fill=0)
-                return 20  # Width for ASCII art
-        
-        return 10  # Default width
+        """Draw custom icons for weather details - no icons, text only"""
+        # No icons drawn - just return minimal width for text spacing
+        return 0  # No width needed since no icons are drawn
     
     def draw_rounded_rect(self, draw, coords, radius=5, fill=None, outline=None, width=1):
         """Draw a rounded rectangle"""
@@ -406,12 +368,12 @@ class DisplayManager:
         image = Image.new('1', (self.width, self.height), 255)
         draw = ImageDraw.Draw(image)
         
-        # Enhanced fonts with Merriweather Sans hierarchy
-        font_title = self.get_font(14, weight='semibold')
-        font_temp = self.get_font(32, weight='bold')  # Larger for better prominence
-        font_medium = self.get_font(12, weight='medium')
-        font_small = self.get_font(10, weight='regular')
-        font_tiny = self.get_font(8, weight='light')
+        # Enhanced fonts with Lato hierarchy - SMALLER SIZES
+        font_title = self.get_font(16, weight='semibold')    # 18 → 16 (-2)
+        font_temp = self.get_font(34, weight='bold')         # 38 → 34 (-4) 
+        font_medium = self.get_font(14, weight='medium')     # 16 → 14 (-2)
+        font_small = self.get_font(12, weight='regular')     # 14 → 12 (-2)
+        font_tiny = self.get_font(10, weight='light')       # 12 → 10 (-2)
         
         # Current time and date
         now = datetime.now()
@@ -424,121 +386,69 @@ class DisplayManager:
         WHITE = 255
         
         # Layout constants
-        margin = 4
-        header_height = 18
+        margin = 8  # Increased margin to move content away from corners
+        header_height = 24  # Increased for bigger time font
         
         # === HEADER SECTION ===
         # Header background
         draw.rectangle([0, 0, self.width, header_height], fill=BLACK)
         
         # Date and time in header (white text on black background)
-        draw.text((margin, 2), f"{weekday} {current_date}", font=font_small, fill=WHITE)
-        time_bbox = draw.textbbox((0, 0), current_time, font=font_small)
-        time_width = time_bbox[2] - time_bbox[0]
-        draw.text((self.width - time_width - margin, 2), current_time, font=font_small, fill=WHITE)
+        draw.text((margin, 3), f"{weekday} {current_date}", font=font_small, fill=WHITE)
+        
+        # Time on the right side - BIGGER FONT
+        time_font = self.get_font(16, weight='bold')  # Bigger and bold for prominence
+        time_bbox = draw.textbbox((0, 0), current_time, font=time_font)
+        time_x = self.width - time_bbox[2] - margin
+        draw.text((time_x, 2), current_time, font=time_font, fill=WHITE)
         
         # === MAIN CONTENT AREA ===
         content_y = header_height + 3
         
-        # City name with underline
+        # City name (no underline)
         city = weather_data.get('city', 'Unknown')
         draw.text((margin, content_y), city, font=font_title, fill=BLACK)
-        city_bbox = draw.textbbox((margin, content_y), city, font=font_title)
-        draw.line([(margin, city_bbox[3] + 1), (city_bbox[2], city_bbox[3] + 1)], fill=BLACK, width=1)
         
         # === LEFT COLUMN - TEMPERATURE AND WEATHER ===
-        temp_y = content_y + 20
+        temp_y = content_y + 24  # More space from city name
         
         # Temperature (large and prominent)
         temp = weather_data.get('temperature', 0)
         temp_text = f"{temp:.0f}°"
         draw.text((margin, temp_y), temp_text, font=font_temp, fill=BLACK)
         
-        # Weather icon (enhanced with ASCII art)
+        # No weather icons - text only display
+        
+        # Weather description (positioned below temperature)
+        description = weather_data.get('description', 'Unknown')
+        if len(description) > 25:  # More space available without details panel
+            description = description[:25] + "..."
+        desc_y = temp_y + 38
+        draw.text((margin, desc_y), description.title(), font=font_medium, fill=BLACK)
+        
+        # === RIGHT SIDE - WEATHER ICON ===
+        # Visual Crossing Weather Icons 3rd Set (50x50px)
         weather_code = weather_data.get('weather_code', 0)
         is_day = weather_data.get('is_day', True)
         
-        # Position for large weather icon
-        temp_bbox = draw.textbbox((margin, temp_y), temp_text, font=font_temp)
-        icon_x = temp_bbox[2] + 8
+        icon_size = 50
+        icon_x = self.width - icon_size - margin
+        icon_y = max(header_height + 2, (self.height - icon_size) // 2)  # Centered vertically on the right
         
-        # Draw weather icon (SVG or fallback)
+        # Try to load Visual Crossing weather icon
         try:
-            # Try to load SVG icon first
             icon_filename = self.get_weather_icon_filename(weather_code, is_day)
-            icon_image = self.load_svg_icon(icon_filename, size=(50, 40))
+            icon_image = self.load_png_icon(icon_filename, size=(icon_size, icon_size))
             
             if icon_image:
-                # Paste the SVG icon
-                image.paste(icon_image, (icon_x, temp_y - 5))
+                # Paste the Visual Crossing weather icon
+                image.paste(icon_image, (icon_x, icon_y))
+                logger.debug(f"Loaded weather icon: {icon_filename}")
             else:
-                # Fallback to ASCII art
-                self.draw_weather_icon_art(draw, icon_x, temp_y - 5, weather_code, is_day, "large")
-        
+                logger.warning(f"Weather icon not found: {icon_filename}")
+                
         except Exception as e:
-            logger.warning(f"Error drawing weather icon: {e}")
-            # Final fallback to simple Unicode icon
-            weather_icon = self.get_weather_icon_fallback(weather_code, is_day)
-            try:
-                icon_font = self.get_font(16, weight='medium')
-                draw.text((icon_x, temp_y + 5), weather_icon, font=icon_font, fill=BLACK)
-            except:
-                pass
-        
-        # Weather description
-        description = weather_data.get('description', 'Unknown')
-        if len(description) > 18:
-            description = description[:18] + "..."
-        desc_y = temp_y + 35
-        draw.text((margin, desc_y), description.title(), font=font_medium, fill=BLACK)
-        
-        # === RIGHT COLUMN - DETAILS ===
-        right_x = 140
-        detail_y = content_y + 20
-        
-        # Decorative border for details section
-        detail_box = [right_x - 3, detail_y - 2, self.width - margin, self.height - margin]
-        draw.rectangle(detail_box, outline=BLACK, width=1)
-        
-        # Details with icons/symbols
-        humidity = weather_data.get('humidity', 0)
-        pressure = weather_data.get('pressure', 0)
-        wind_speed = weather_data.get('wind_speed', 0)
-        wind_dir = weather_data.get('wind_direction', 0)
-        
-        details = [
-            ('humidity', f"{humidity}%", "Luftf."),
-            ('pressure', f"{pressure:.0f}", "hPa"),
-            ('wind', f"{wind_speed:.1f}", "m/s"),
-            ('direction', f"{wind_dir}°", "")
-        ]
-        
-        for i, (icon_type, value, unit) in enumerate(details):
-            y_pos = detail_y + (i * 16)
-            
-            # Draw custom icon
-            icon_width = self.draw_detail_icons(draw, right_x, y_pos, icon_type)
-            text_x = right_x + icon_width
-            
-            # Value and unit
-            draw.text((text_x, y_pos), value, font=font_small, fill=BLACK)
-            if unit:
-                value_bbox = draw.textbbox((text_x, y_pos), value, font=font_small)
-                draw.text((value_bbox[2] + 2, y_pos), unit, font=font_tiny, fill=BLACK)
-        
-        # === DECORATIVE ELEMENTS ===
-        # Bottom border line
-        draw.line([(margin, self.height - 3), (self.width - margin, self.height - 3)], fill=BLACK, width=1)
-        
-        # Corner decorations
-        corner_size = 3
-        # Top left corner
-        draw.line([(0, header_height + corner_size), (0, header_height), (corner_size, header_height)], fill=BLACK, width=1)
-        # Top right corner  
-        draw.line([(self.width - corner_size, header_height), (self.width, header_height), (self.width, header_height + corner_size)], fill=BLACK, width=1)
-        
-        # Rotate image 180 degrees
-        image = image.rotate(180)
+            logger.debug(f"Could not load Visual Crossing icon: {e}")
         
         return image
     
