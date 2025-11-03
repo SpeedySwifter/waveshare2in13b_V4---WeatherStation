@@ -59,6 +59,9 @@ def test_display():
         draw.text((10, 75), f"Display: {epd.width}x{epd.height}", fill=0)
         draw.text((10, 95), "Landscape Layout OK!", fill=0)
         
+        # Rotate image 180 degrees
+        image = image.rotate(180)
+        
         # Display image
         print("🔄 Displaying test image...")
         epd.display(epd.getbuffer(image))

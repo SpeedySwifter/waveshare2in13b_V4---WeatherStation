@@ -155,6 +155,9 @@ class DisplayManager:
         # Separator line
         draw.line([(120, 20), (120, 110)], fill=0, width=1)
         
+        # Rotate image 180 degrees
+        image = image.rotate(180)
+        
         return image
     
     def show_weather(self, weather_data):
