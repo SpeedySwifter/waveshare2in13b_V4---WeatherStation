@@ -1,6 +1,6 @@
 [Unit]
 Description=Raspberry Pi Weather Station with E-Ink Display
-Documentation=https://github.com/your-repo/weather-station
+Documentation=https://github.com/SpeedySwifter/waveshare2in13b_V4---WeatherStation
 After=network-online.target
 Wants=network-online.target
 StartLimitIntervalSec=300
@@ -8,10 +8,10 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-User=pi
-Group=pi
-WorkingDirectory=/home/pi/weather-station
-ExecStart=/usr/bin/python3 /home/pi/weather-station/weather_station.py
+User=svenhajer
+Group=svenhajer
+WorkingDirectory=/Users/svenhajer/Documents/GitHub/waveshare2in13b_V4---WeatherStation
+ExecStart=/usr/bin/python3 /Users/svenhajer/Documents/GitHub/waveshare2in13b_V4---WeatherStation/weather_station.py
 ExecReload=/bin/kill -HUP $MAINPID
 
 # Restart configuration - very robust
@@ -39,7 +39,7 @@ SyslogIdentifier=weather-station
 NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
-ReadWritePaths=/home/pi/weather-station
+ReadWritePaths=/Users/svenhajer/Documents/GitHub/waveshare2in13b_V4---WeatherStation
 MemoryMax=256M
 CPUQuota=50%
 
