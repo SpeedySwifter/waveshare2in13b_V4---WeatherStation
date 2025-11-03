@@ -64,7 +64,7 @@ echo
 echo "Next steps:"
 echo "1. Edit config.json and add your OpenWeatherMap API key"
 echo "2. Get a free API key from: https://openweathermap.org/api"
-echo "3. Connect your Waveshare 2.13\" B V4 display"
+echo "3. Connect your Waveshare 2.13\" V4 display"
 echo "4. Reboot your Raspberry Pi: sudo reboot"
 echo "5. Start the service: sudo systemctl start weather-station.service"
 echo "6. Check status: sudo systemctl status weather-station.service"

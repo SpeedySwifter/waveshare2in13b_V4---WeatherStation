@@ -43,5 +43,5 @@ Add these badges to your README.md for better visibility:
 ![Python](https://img.shields.io/badge/python-v3.7+-blue.svg)
 ![Platform](https://img.shields.io/badge/platform-Raspberry%20Pi-red.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Hardware](https://img.shields.io/badge/hardware-Waveshare%202.13%22%20B%20V4-orange.svg)
+![Hardware](https://img.shields.io/badge/hardware-Waveshare%202.13%22%20V4-orange.svg)
 ```

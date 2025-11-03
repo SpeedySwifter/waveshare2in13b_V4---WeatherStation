@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Weather Station for Raspberry Pi Zero 2 with Waveshare 2.13" B V4 E-ink Display
+Weather Station for Raspberry Pi Zero 2 with Waveshare 2.13" V4 E-ink Display
 Displays current weather data fetched from OpenWeatherMap API
 """
 

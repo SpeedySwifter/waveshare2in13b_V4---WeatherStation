@@ -1,10 +1,10 @@
-# Raspberry Pi Weather Station mit Waveshare 2.13" B V4 E-Ink Display
+# Raspberry Pi Weather Station mit Waveshare 2.13" V4 E-Ink Display
 
-Eine Wetterstation für den Raspberry Pi Zero 2 mit Waveshare 2.13" B V4 E-Ink Display, die Wetterdaten über die OpenWeatherMap API abruft und anzeigt.
+Eine Wetterstation für den Raspberry Pi Zero 2 mit Waveshare 2.13" V4 E-Ink Display, die Wetterdaten über die OpenWeatherMap API abruft und anzeigt.
 
 ## Features
 
-- **E-Ink Display**: Nutzt das Waveshare 2.13" B V4 Display (schwarz/rot/weiß)
+- **E-Ink Display**: Nutzt das Waveshare 2.13" V4 Display (schwarz/weiß)
 - **Wetter API**: Ruft aktuelle Wetterdaten von OpenWeatherMap ab
 - **Deutsche Sprache**: Unterstützt deutsche Wetterberichte
 - **Energieeffizient**: E-Ink Display verbraucht nur beim Update Strom
@@ -14,7 +14,7 @@ Eine Wetterstation für den Raspberry Pi Zero 2 mit Waveshare 2.13" B V4 E-Ink D
 ## Hardware Anforderungen
 
 - Raspberry Pi Zero 2 W
-- Waveshare 2.13inch e-Paper HAT (B) V4
+- Waveshare 2.13inch e-Paper HAT V4
 - MicroSD Karte (16GB+)
 - Stromversorgung (USB-C)
 
@@ -24,7 +24,7 @@ Das 2.13" Display (250x122 Pixel) zeigt folgende Informationen:
 
 - **Datum und Uhrzeit** (oben)
 - **Stadtname**
-- **Temperatur** (groß, in rot)
+- **Temperatur** (groß)
 - **Wetterbeschreibung**
 - **Luftfeuchtigkeit und Luftdruck**
 - **Windgeschwindigkeit und -richtung**
@@ -85,7 +85,7 @@ cp config.json.example config.json
 
 ### 5. Hardware Verbindung
 
-Verbinde das Waveshare 2.13" B V4 Display mit dem Raspberry Pi:
+Verbinde das Waveshare 2.13" V4 Display mit dem Raspberry Pi:
 
 | Display Pin | Pi Pin | Funktion |
 |-------------|--------|----------|
@@ -188,7 +188,7 @@ Für Entwicklung ohne Hardware:
 python3 weather_station.py
 ```
 
-Die generierten Bilder werden als `weather_display_black.png` und `weather_display_red.png` gespeichert.
+Die generierten Bilder werden als `weather_display.png` gespeichert.
 
 ## Troubleshooting
 
