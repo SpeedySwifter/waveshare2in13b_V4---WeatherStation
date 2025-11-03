@@ -29,34 +29,68 @@ Das 2.13" Display (250x122 Pixel) zeigt folgende Informationen:
 - **Luftfeuchtigkeit und Luftdruck**
 - **Windgeschwindigkeit und -richtung**
 
-## Installation
+## Quick Start
 
-### 1. Raspberry Pi OS Setup
+Für eine schnelle Installation verwende das automatische Setup-Script:
+
+```bash
+# Projekt klonen
+git clone https://github.com/SpeedySwifter/waveshare2in13b_V4---WeatherStation.git weather-station
+cd weather-station
+
+# Automatisches Setup ausführen
+bash setup.sh
+
+# API Key in config.json eintragen
+nano config.json
+
+# System neustarten
+sudo reboot
+```
+
+## Detaillierte Installation
+
+### 1. Projekt klonen
+
+```bash
+cd ~
+git clone https://github.com/SpeedySwifter/waveshare2in13b_V4---WeatherStation.git weather-station
+cd weather-station
+```
+
+### 2. Automatisches Setup (empfohlen)
+
+Das `setup.sh` Script installiert automatisch alle Abhängigkeiten:
+
+```bash
+bash setup.sh
+```
+
+Das Script führt folgende Schritte aus:
+- System-Updates
+- Installation aller Python-Abhängigkeiten
+- SPI-Interface aktivieren
+- Benutzer zu spi/gpio Gruppen hinzufügen
+- Systemd Service installieren
+- Beispiel-Konfiguration erstellen
+
+### 3. Manuelle Installation
+
+Falls du die Installation manuell durchführen möchtest:
 
 ```bash
 # System aktualisieren
 sudo apt update && sudo apt upgrade -y
 
-# Python und Git installieren
-sudo apt install python3 python3-pip git -y
+# Abhängigkeiten installieren
+sudo apt install -y python3 python3-pip python3-venv git python3-dev libjpeg-dev zlib1g-dev libfreetype-dev liblcms2-dev libopenjp2-7-dev libtiff-dev python3-pil python3-requests python3-rpi.gpio python3-spidev
 
 # SPI aktivieren
 sudo raspi-config
 # Interface Options -> SPI -> Enable
-```
 
-### 2. Projekt klonen
-
-```bash
-cd ~
-git clone <repository-url> weather-station
-cd weather-station
-```
-
-### 3. Python Dependencies installieren
-
-```bash
-pip3 install -r requirements.txt
+# Benutzer zu Gruppen hinzufügen
+sudo usermod -a -G spi,gpio $USER
 ```
 
 ### 4. OpenWeatherMap API Key
@@ -108,43 +142,28 @@ python3 weather_station.py
 
 ### Als Systemdienst (empfohlen)
 
-1. Erstelle eine Systemd Service Datei:
+Wenn du das `setup.sh` Script verwendet hast, ist der Service bereits installiert:
 
 ```bash
-sudo nano /etc/systemd/system/weather-station.service
+# Service starten
+sudo systemctl start weather-station.service
+
+# Status prüfen
+sudo systemctl status weather-station.service
 ```
 
-2. Füge folgenden Inhalt ein:
+#### Manuelle Service Installation
 
-```ini
-[Unit]
-Description=Weather Station
-After=network.target
-
-[Service]
-Type=simple
-User=pi
-WorkingDirectory=/home/pi/weather-station
-ExecStart=/usr/bin/python3 /home/pi/weather-station/weather_station.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-3. Service aktivieren und starten:
+Falls du den Service manuell installieren möchtest:
 
 ```bash
+# Service-Datei kopieren
+sudo cp weather-station.service /etc/systemd/system/
+
+# Service aktivieren und starten
 sudo systemctl daemon-reload
 sudo systemctl enable weather-station.service
 sudo systemctl start weather-station.service
-```
-
-4. Status prüfen:
-
-```bash
-sudo systemctl status weather-station.service
 ```
 
 ## Konfiguration
@@ -165,6 +184,51 @@ Alternativ zum config.json kann der API Key als Umgebungsvariable gesetzt werden
 
 ```bash
 export OPENWEATHER_API_KEY="dein_api_key_hier"
+```
+
+## Zusätzliche Scripts
+
+### setup.sh
+Automatisches Setup-Script für die komplette Installation:
+```bash
+bash setup.sh
+```
+
+### install_autostart.sh
+Installiert und konfiguriert den Autostart-Service:
+```bash
+bash install_autostart.sh
+```
+
+### health_check.sh
+Überprüft den Status der Wetterstation und startet sie bei Bedarf neu:
+```bash
+bash health_check.sh
+```
+
+### run_weather_station.sh
+Wrapper-Script zum Starten der Wetterstation:
+```bash
+bash run_weather_station.sh
+```
+
+## Projektstruktur
+
+```
+weather-station/
+├── weather_station.py          # Hauptprogramm
+├── weather_api.py             # OpenWeatherMap API Interface
+├── display_manager.py         # E-Ink Display Management
+├── config.py                  # Konfiguration laden
+├── config.json.example        # Beispiel-Konfiguration
+├── requirements.txt           # Python-Abhängigkeiten
+├── weather-station.service    # Systemd Service
+├── setup.sh                   # Automatisches Setup
+├── install_autostart.sh       # Autostart Installation
+├── health_check.sh           # Status-Überwachung
+├── run_weather_station.sh    # Start-Script
+├── waveshare_epd/            # Display-Treiber
+└── README.md                 # Diese Datei
 ```
 
 ## Logs und Debugging
