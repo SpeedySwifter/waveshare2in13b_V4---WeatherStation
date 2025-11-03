@@ -22,14 +22,51 @@ Eine Wetterstation für den Raspberry Pi Zero 2 mit Waveshare 2.13" V4 E-Ink Dis
 
 ## Display Layout
 
-Das 2.13" Display (250x122 Pixel) zeigt folgende Informationen:
+Das 2.13" Display (250x122 Pixel) verfügt über ein modernes, sauberes Design mit:
 
-- **Datum und Uhrzeit** (oben)
-- **Stadtname**
-- **Temperatur** (groß)
-- **Wetterbeschreibung**
-- **Luftfeuchtigkeit und Luftdruck**
-- **Windgeschwindigkeit und -richtung**
+### **Header-Bereich**
+- **Schwarzer Header-Balken** mit weißem Text
+- **Datum und Wochentag** (links)
+- **Aktuelle Uhrzeit** (rechts)
+
+### **Hauptinhalt**
+- **Stadtname** mit dekorativer Unterstreichung
+- **Große Temperaturanzeige** (prominent)
+- **Wetter-Icon** (professionelle SVG-Symbole für verschiedene Bedingungen)
+- **Wetterbeschreibung** auf Deutsch
+
+### **Details-Panel**
+- **Umrandeter Informationsbereich** mit:
+  - 💧 **Luftfeuchtigkeit** in Prozent
+  - 📊 **Luftdruck** in hPa
+  - 💨 **Windgeschwindigkeit** in m/s
+  - 🧭 **Windrichtung** in Grad
+
+### **Design-Features**
+- **Professionelle SVG-Wetter-Icons** mit ASCII-Art Fallback
+- **Merriweather Sans Typografie** mit mehreren Schriftgewichten
+- **Tag/Nacht-Wetter-Variationen** (Sonne/Mond basierend auf Tageszeit)
+- **Typografie-Hierarchie** mit passenden Schriftgewichten (light, regular, medium, semibold, bold)
+- **Dekorative Eckelemente**
+- **Saubere Rahmen und Trennlinien**
+- **Optimiert für E-Ink Display** (nur schwarz/weiß)
+
+### **Wetter-Icons**
+Das System verwendet hochwertige SVG-Icons aus dem `icons/` Ordner:
+- **Klarer Himmel**: Verschiedene Icons für Tag (Sonne) und Nacht (Mond)
+- **Bewölkte Bedingungen**: Verschiedene Wolkendichten (1-3 Stufen)
+- **Niederschlag**: Regen, Schnee und Mischbedingungen
+- **Besonderes Wetter**: Nebel, Gewitter, schweres Wetter
+- **Automatischer Fallback**: ASCII-Art wenn SVG-Unterstützung nicht verfügbar
+
+### **Typografie**
+Professionelle Merriweather Sans Schriftfamilie mit mehreren Gewichten:
+- **Light**: Kleine Details und sekundäre Informationen
+- **Regular**: Standard-Text und Beschriftungen
+- **Medium**: Wetterbeschreibungen und mittlere Betonung
+- **SemiBold**: Stadtnamen und Bereichsüberschriften
+- **Bold**: Große Temperaturanzeige und primäre Betonung
+- **Automatischer Fallback**: System-Schriftarten wenn Merriweather Sans nicht verfügbar
 
 ## Schnellstart
 
@@ -185,6 +222,24 @@ Automatisches Setup-Script für die komplette Installation:
 bash setup.sh
 ```
 
+### ssh_fix.sh
+Standalone SSH-Konfigurationsfix für Raspberry Pi Zero 2:
+```bash
+bash ssh_fix.sh
+```
+
+### test_new_design.py
+Vorschau des modernen Display-Designs ohne Hardware:
+```bash
+python3 test_new_design.py
+```
+
+### install_svg_support.sh
+SVG-Icon-Unterstützung installieren (optional für bessere Icons):
+```bash
+bash install_svg_support.sh
+```
+
 ### health_check.sh
 Überprüft den Status der Wetterstation und startet sie bei Bedarf neu:
 ```bash
@@ -197,13 +252,18 @@ bash health_check.sh
 weather-station/
 ├── weather_station.py          # Hauptprogramm
 ├── weather_api.py             # Open-Meteo API Interface
-├── display_manager.py         # E-Ink Display Management
+├── display_manager.py         # E-Ink Display Management (modernes Design)
 ├── config.py                  # Konfiguration laden
 ├── config.json.example        # Beispiel-Konfiguration
 ├── requirements.txt           # Python-Abhängigkeiten
 ├── weather-station.service    # Systemd Service
 ├── setup.sh                   # Automatisches Setup
+├── ssh_fix.sh                 # SSH-Konfigurationsfix für Pi Zero 2
+├── test_new_design.py         # Design-Vorschau-Generator
+├── install_svg_support.sh     # SVG-Icon-Unterstützung Installer
 ├── health_check.sh           # Status-Überwachung
+├── icons/                    # SVG-Wetter-Icon Assets
+├── Merriweather_Sans/        # Professionelle Schriftfamilie
 ├── waveshare_epd/            # Display-Treiber
 ├── README.md                 # Englische Dokumentation
 ├── README_DE.md              # Deutsche Dokumentation
@@ -231,6 +291,54 @@ sudo journalctl -u weather-station.service --since "1 hour ago"
 2. **Berechtigungsfehler**: Benutzer zu Gruppen hinzufügen: `sudo usermod -a -G spi,gpio $USER`
 3. **Display zeigt nichts**: Hardware-Verbindungen prüfen
 4. **Service startet nicht**: Logs prüfen: `sudo journalctl -u weather-station.service`
+5. **SSH-Probleme auf Pi Zero 2**: SSH-Fix ausführen: `bash ssh_fix.sh`
+
+## SSH-Fehlerbehebung (Raspberry Pi Zero 2)
+
+Der Raspberry Pi Zero 2 kann SSH-Verbindungsprobleme haben. Das Projekt enthält umfassende SSH-Fixes:
+
+### Schnelle SSH-Reparatur
+
+```bash
+# Standalone SSH-Fix ausführen
+bash ssh_fix.sh
+```
+
+### Häufige SSH-Probleme
+
+1. **Langsame Verbindungen**: 
+   - DNS-Auflösung deaktiviert
+   - Kompression aktiviert
+   - Keep-Alive optimiert
+
+2. **Verbindungsabbrüche**:
+   - Timeout-Werte angepasst
+   - Client-Keep-Alive konfiguriert
+
+3. **Authentifizierungsprobleme**:
+   - SSH-Schlüssel-Setup
+   - Root-Login-Sicherheit
+
+### IP-Adresse finden
+
+```bash
+# Router-Interface prüfen oder:
+arp -a | grep -E "b8:27:eb|dc:a6:32|e4:5f:01"
+
+# Netzwerk scannen:
+nmap -sn 192.168.1.0/24
+```
+
+### SSH-Schlüssel einrichten
+
+```bash
+# Auf dem Client (Mac/PC):
+ssh-keygen -t rsa -b 4096
+ssh-copy-id pi@<PI_IP_ADDRESS>
+
+# Testen:
+ssh pi@<PI_IP_ADDRESS>
+```
 
 ## Entwicklung
 
@@ -240,8 +348,28 @@ sudo journalctl -u weather-station.service --since "1 hour ago"
 # Abhängigkeiten installieren
 pip3 install -r requirements.txt
 
+# Neues Display-Design testen
+python3 test_new_design.py
+
 # Wetterstation starten
 python3 weather_station.py
+```
+
+### Design-Vorschau
+
+Um das neue Interface-Design ohne Hardware zu betrachten:
+
+```bash
+# Vorschau-Bilder generieren
+python3 test_new_design.py
+
+# Generierte Dateien betrachten:
+# - weather_display_new_design.png (Tag-Modus)
+# - weather_display_night_clear.png (Nacht-Modus)
+# - weather_display_rain.png (Regen)
+# - weather_display_snow.png (Schnee)
+# - weather_display_thunderstorm.png (Gewitter)
+# - weather_display_fog.png (Nebel)
 ```
 
 ### Code-Struktur
@@ -263,4 +391,6 @@ Beiträge sind willkommen! Bitte erstelle einen Pull Request oder öffne ein Iss
 
 - [Open-Meteo](https://open-meteo.com/) für die kostenlose Wetter-API
 - [Waveshare](https://www.waveshare.com/) für die E-Ink Display Hardware
+- [Google Fonts](https://fonts.google.com/) für die Merriweather Sans Schriftfamilie
+- Icon-Designer für die professionellen SVG-Wetter-Icons
 - Raspberry Pi Foundation für die großartige Hardware-Plattform
