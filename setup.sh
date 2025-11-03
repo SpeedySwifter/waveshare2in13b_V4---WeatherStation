@@ -19,11 +19,15 @@ sudo apt update && sudo apt upgrade -y
 
 # Install required system packages
 echo "2. Installing required packages..."
-sudo apt install -y python3 python3-pip git python3-dev libjpeg-dev zlib1g-dev libfreetype-dev liblcms2-dev libopenjp2-7-dev libtiff-dev python3-pil
+sudo apt install -y python3 python3-pip python3-venv git python3-dev libjpeg-dev zlib1g-dev libfreetype-dev liblcms2-dev libopenjp2-7-dev libtiff-dev python3-pil python3-requests python3-rpi.gpio python3-spidev
 
 # Install Python dependencies
 echo "3. Installing Python dependencies..."
-pip3 install -r requirements.txt
+# Try system packages first, then fallback to pip with --break-system-packages if needed
+if ! python3 -c "import requests, RPi.GPIO, spidev" 2>/dev/null; then
+    echo "Installing additional packages with pip..."
+    pip3 install --break-system-packages requests RPi.GPIO spidev 2>/dev/null || echo "Some packages may need manual installation"
+fi
 
 # Enable SPI
 echo "4. Enabling SPI interface..."

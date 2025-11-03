@@ -1,7 +1,10 @@
 [Unit]
 Description=Raspberry Pi Weather Station with E-Ink Display
-After=network.target
-Wants=network.target
+Documentation=https://github.com/your-repo/weather-station
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
 
 [Service]
 Type=simple
@@ -9,13 +12,40 @@ User=pi
 Group=pi
 WorkingDirectory=/home/pi/weather-station
 ExecStart=/usr/bin/python3 /home/pi/weather-station/weather_station.py
+ExecReload=/bin/kill -HUP $MAINPID
+
+# Restart configuration - very robust
 Restart=always
-RestartSec=10
+RestartSec=15
+TimeoutStartSec=60
+TimeoutStopSec=30
+
+# Failure handling
+StartLimitAction=reboot
+FailureAction=restart
+
+# Process management
+KillMode=mixed
+KillSignal=SIGTERM
+SendSIGKILL=yes
+FinalKillSignal=SIGKILL
+
+# Logging
 StandardOutput=journal
 StandardError=journal
+SyslogIdentifier=weather-station
+
+# Security and resource limits
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ReadWritePaths=/home/pi/weather-station
+MemoryMax=256M
+CPUQuota=50%
 
 # Environment variables (optional)
 # Environment=OPENWEATHER_API_KEY=your_api_key_here
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target

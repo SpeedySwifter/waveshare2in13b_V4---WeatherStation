@@ -1,5 +1,5 @@
 """
-Waveshare 2.13inch e-Paper B V4 Display Driver
+Waveshare 2.13inch e-Paper V4 Display Driver (Regular Black/White version)
 Compatible with Raspberry Pi
 """
 
@@ -91,15 +91,20 @@ class EPD:
         logger.debug("e-Paper busy")
         self.send_command(0x71)
         busy = GPIO.input(self.busy_pin)
-        while(busy == 0):
+        timeout = 0
+        while(busy == 0 and timeout < 100):
             self.send_command(0x71)
             busy = GPIO.input(self.busy_pin)
+            timeout += 1
+            self.delay_ms(10)
+        if timeout >= 100:
+            logger.warning("Display busy timeout - display may not be connected")
         self.delay_ms(20)
         logger.debug("e-Paper busy release")
 
     def TurnOnDisplay(self):
         self.send_command(0x12)
-        self.delay_ms(10)
+        self.delay_ms(100)
         self.ReadBusy()
 
     def init(self):
@@ -148,21 +153,21 @@ class EPD:
                         buf[int((newx + newy*self.width) / 8)] &= ~(0x80 >> (y % 8))
         return buf
 
-    def display(self, imageblack, imagered):
+    def display(self, image):
         self.send_command(0x10)
-        self.send_data2(imageblack)
+        self.send_data2([0x00] * int(self.width * self.height / 8))
         
         self.send_command(0x13)
-        self.send_data2(imagered)
+        self.send_data2(image)
         
         self.TurnOnDisplay()
 
     def Clear(self):
         self.send_command(0x10)
-        self.send_data2([0xFF] * int(self.width * self.height / 8))
+        self.send_data2([0x00] * int(self.width * self.height / 8))
         
         self.send_command(0x13)
-        self.send_data2([0x00] * int(self.width * self.height / 8))
+        self.send_data2([0xFF] * int(self.width * self.height / 8))
         
         self.TurnOnDisplay()
 
