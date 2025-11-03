@@ -6,7 +6,18 @@ Creates a sample image to preview the improved interface
 
 import sys
 import os
+import logging
 from datetime import datetime
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 # Add the current directory to the path
 sys.path.append(os.path.dirname(__file__))

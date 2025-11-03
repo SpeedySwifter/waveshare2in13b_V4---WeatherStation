@@ -1,13 +1,19 @@
 """
 Display Manager for Weather Station
-Handles the e-ink display rendering and layout
+Handles the e-ink display rendering, layout, and icon processing
 """
 
+import os
+import time
 import logging
-from PIL import Image, ImageDraw, ImageFont
+import json
+import math
+from datetime import datetime, timedelta
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from datetime import datetime
 import os
 import sys
+import glob
 
 # PNG icons are used - no Cairo/SVG dependencies needed!
 
@@ -56,6 +62,9 @@ class DisplayManager:
         self.fonts_dir = os.path.join(os.path.dirname(__file__), 'Lato')
         self.font_cache = {}  # Cache for loaded fonts
         
+        # Process icons to remove white backgrounds
+        self.process_weather_icons()
+        
         # Initialize the e-paper display if available
         if epd2in13_V4:
             try:
@@ -74,6 +83,42 @@ class DisplayManager:
                 self.epd = None
         else:
             logger.warning("E-paper display module not available (development mode)")
+    
+    def process_weather_icons(self):
+        """Process weather icons to remove white backgrounds"""
+        if not self.icons_dir:
+            return
+            
+        # Process all PNG files in the icons directory
+        for icon_file in glob.glob(os.path.join(self.icons_dir, '*.png')):
+            try:
+                # Skip already processed icons
+                if icon_file.endswith('_processed.png'):
+                    continue
+                    
+                output_file = icon_file.replace('.png', '_processed.png')
+                
+                # Only process if output doesn't exist
+                if not os.path.exists(output_file):
+                    # Open the image and convert to RGBA if needed
+                    with Image.open(icon_file) as img:
+                        if img.mode != 'RGBA':
+                            img = img.convert('RGBA')
+                        
+                        # Make white pixels transparent and ensure black color
+                        data = img.getdata()
+                        new_data = []
+                        for r, g, b, a in data:
+                            if r > 200 and g > 200 and b > 200:  # White background
+                                new_data.append((0, 0, 0, 0))  # Transparent
+                            else:  # Keep original color but ensure it's black
+                                new_data.append((0, 0, 0, 255))  # Black with full opacity
+                        img.putdata(new_data)
+                        img = img.convert('1')  # Convert to 1-bit black and white
+                        img.save(output_file, 'PNG', transparency=0)  # Save with transparency
+            
+            except Exception as e:
+                logger.warning(f"Error processing icon {icon_file}: {e}")
     
     def _verify_spi_setup(self):
         """Verify SPI setup according to Waveshare documentation"""
@@ -179,9 +224,9 @@ class DisplayManager:
             3: ("cloudy.png", "cloudy.png"),
             45: ("fog.png", "fog.png"),
             48: ("fog.png", "fog.png"),
-            51: ("showers-day.png", "showers-night.png"),
-            53: ("showers-day.png", "showers-night.png"),
-            55: ("showers-day.png", "showers-night.png"),
+            51: ("rain.png", "rain.png"),  # Using rain.png for showers
+            53: ("rain.png", "rain.png"),
+            55: ("rain.png", "rain.png"),
             56: ("sleet.png", "sleet.png"),
             57: ("sleet.png", "sleet.png"),
             61: ("rain.png", "rain.png"),
@@ -195,12 +240,12 @@ class DisplayManager:
             73: ("snow.png", "snow.png"),
             75: ("snow.png", "snow.png"),
             77: ("snow.png", "snow.png"),
-            80: ("showers-day.png", "showers-night.png"),
-            81: ("showers-day.png", "showers-night.png"),
-            82: ("showers-day.png", "showers-night.png"),
+            80: ("rain.png", "rain.png"),  # Using rain.png for showers
+            81: ("rain.png", "rain.png"),
+            82: ("rain.png", "rain.png"),
             85: ("snow-showers-day.png", "snow-showers-night.png"),
             86: ("snow-showers-day.png", "snow-showers-night.png"),
-            95: ("thunder-showers-day.png", "thunder-showers-night.png"),
+            95: ("thunder-rain.png", "thunder-rain.png"),  # Using thunder-rain.png
             96: ("hail.png", "hail.png"),
             99: ("hail.png", "hail.png"),
         }
@@ -229,26 +274,43 @@ class DisplayManager:
         if cache_key in self.icon_cache:
             return self.icon_cache[cache_key]
             
-        icon_path = os.path.join(self.icons_dir, filename)
+        # Check for processed version first
+        base_name = os.path.splitext(filename)[0]
+        processed_file = os.path.join(self.icons_dir, f"{base_name}_processed.png")
+        if os.path.exists(processed_file):
+            icon_path = processed_file
+        else:
+            icon_path = os.path.join(self.icons_dir, filename)
         if not os.path.exists(icon_path):
             logger.warning(f"Icon file not found: {icon_path}")
             return None
             
         try:
-            # Load PNG image
-            icon_image = Image.open(icon_path)
+            # Load the image and convert to RGBA
+            icon_image = Image.open(icon_path).convert('RGBA')
+            
+            # Create a new white background image
+            processed = Image.new('RGBA', icon_image.size, (255, 255, 255, 0))
+            
+            # Process the image
+            for x in range(icon_image.width):
+                for y in range(icon_image.height):
+                    r, g, b, a = icon_image.getpixel((x, y))
+                    # If pixel is not transparent, make it black
+                    if a > 0 and not (r > 200 and g > 200 and b > 200):
+                        processed.putpixel((x, y), (0, 0, 0, 255))  # Black with full opacity
+            
+            icon_image = processed
             
             # Resize if needed
             if icon_image.size != size:
                 icon_image = icon_image.resize(size, Image.Resampling.LANCZOS)
             
-            # Convert to grayscale and then to 1-bit for e-ink
-            icon_image = icon_image.convert('L')  # Grayscale
+            # Convert to 1-bit for e-ink (black and white)
+            icon_image = icon_image.convert('1')
             
-            # Apply threshold to convert to black/white
-            # For Visual Crossing icons (black symbols on white background)
-            threshold = 128
-            icon_image = icon_image.point(lambda x: 0 if x < threshold else 255, mode='1')  # Keep black symbols
+            # Invert if needed (black symbols on white background)
+            icon_image = Image.eval(icon_image, lambda x: 255 - x)
             
             # Cache the processed image
             self.icon_cache[cache_key] = icon_image
@@ -364,9 +426,14 @@ class DisplayManager:
     
     def create_weather_image(self, weather_data):
         """Create modern weather display image with improved design"""
+        logger.debug("Creating weather image with data: %s", weather_data)
+        
         # Create image with natural dimensions
         image = Image.new('1', (self.width, self.height), 255)
         draw = ImageDraw.Draw(image)
+        
+        # Debug: Draw a border around the image
+        draw.rectangle([(0, 0), (self.width-1, self.height-1)], outline=0)
         
         # Enhanced fonts with Lato hierarchy - SMALLER SIZES
         font_title = self.get_font(16, weight='semibold')    # 18 → 16 (-2)
@@ -435,20 +502,153 @@ class DisplayManager:
         icon_x = self.width - icon_size - margin
         icon_y = max(header_height + 2, (self.height - icon_size) // 2)  # Centered vertically on the right
         
-        # Try to load Visual Crossing weather icon
-        try:
-            icon_filename = self.get_weather_icon_filename(weather_code, is_day)
-            icon_image = self.load_png_icon(icon_filename, size=(icon_size, icon_size))
-            
-            if icon_image:
-                # Paste the Visual Crossing weather icon
-                image.paste(icon_image, (icon_x, icon_y))
-                logger.debug(f"Loaded weather icon: {icon_filename}")
-            else:
-                logger.warning(f"Weather icon not found: {icon_filename}")
+        # Draw programmatic weather icon
+        draw = ImageDraw.Draw(image)
+        
+        # Draw a white rectangle for the icon area with a thin border
+        draw.rectangle([
+            (icon_x, icon_y),
+            (icon_x + icon_size, icon_y + icon_size)
+        ], fill=1, outline=0)  # White fill, black border
+        
+        # Draw different icons based on weather code
+        if weather_data['weather_code'] == 0:  # Clear sky
+            # Sun
+            center_x, center_y = icon_x + icon_size//2, icon_y + icon_size//2
+            radius = icon_size // 3
+            # Sun rays
+            for angle in range(0, 360, 30):
+                rad = math.radians(angle)
+                end_x = center_x + int(math.cos(rad) * (radius + 5))
+                end_y = center_y + int(math.sin(rad) * (radius + 5))
+                draw.line([(center_x, center_y), (end_x, end_y)], fill=0, width=1)
+            # Sun center
+            draw.ellipse([
+                (center_x - radius, center_y - radius),
+                (center_x + radius, center_y + radius)
+            ], fill=0)
                 
-        except Exception as e:
-            logger.debug(f"Could not load Visual Crossing icon: {e}")
+        elif weather_data['weather_code'] in [1, 2]:  # Partly cloudy
+            # Sun peeking from behind cloud
+            # Sun (top right)
+            sun_x, sun_y = icon_x + icon_size*2//3, icon_y + icon_size//3
+            sun_r = icon_size // 4
+            draw.ellipse([
+                (sun_x - sun_r, sun_y - sun_r),
+                (sun_x + sun_r, sun_y + sun_r)
+            ], fill=0)
+            # Cloud (bottom left)
+            cloud_x, cloud_y = icon_x + icon_size//3, icon_y + icon_size*2//3
+            cloud_w, cloud_h = icon_size//2, icon_size//3
+            draw.ellipse([
+                (cloud_x - cloud_w//2, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w//2, cloud_y + cloud_h//2)
+            ], fill=0)
+            draw.ellipse([
+                (cloud_x, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w, cloud_y + cloud_h//2)
+            ], fill=0)
+            
+        elif weather_data['weather_code'] in [3, 45, 48]:  # Overcast, fog
+            # Simple cloud
+            cloud_x, cloud_y = icon_x + icon_size//2, icon_y + icon_size//2
+            cloud_w, cloud_h = icon_size*2//3, icon_size//3
+            draw.ellipse([
+                (cloud_x - cloud_w//2, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w//2, cloud_y + cloud_h//2)
+            ], fill=0)
+            draw.ellipse([
+                (cloud_x - cloud_w//4, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w*3//4, cloud_y + cloud_h//2)
+            ], fill=0)
+            
+        elif weather_data['weather_code'] in [51, 53, 55, 61, 63, 65, 80, 81, 82]:  # Rain
+            # Cloud with rain
+            cloud_x, cloud_y = icon_x + icon_size//2, icon_y + icon_size//3
+            cloud_w, cloud_h = icon_size*2//3, icon_size//3
+            # Cloud
+            draw.ellipse([
+                (cloud_x - cloud_w//2, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w//2, cloud_y + cloud_h//2)
+            ], fill=0)
+            draw.ellipse([
+                (cloud_x - cloud_w//4, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w*3//4, cloud_y + cloud_h//2)
+            ], fill=0)
+            # Rain drops
+            for i in range(5):
+                drop_x = cloud_x - cloud_w//4 + i * (cloud_w//4)
+                drop_y = cloud_y + cloud_h//2
+                draw.line([
+                    (drop_x, drop_y),
+                    (drop_x - 2, drop_y + cloud_h//2)
+                ], fill=0, width=1)
+                
+        elif weather_data['weather_code'] in [71, 73, 75, 77, 85, 86]:  # Snow
+            # Cloud with snow
+            cloud_x, cloud_y = icon_x + icon_size//2, icon_y + icon_size//3
+            cloud_w, cloud_h = icon_size*2//3, icon_size//3
+            # Cloud
+            draw.ellipse([
+                (cloud_x - cloud_w//2, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w//2, cloud_y + cloud_h//2)
+            ], fill=0)
+            draw.ellipse([
+                (cloud_x - cloud_w//4, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w*3//4, cloud_y + cloud_h//2)
+            ], fill=0)
+            # Snowflakes
+            for i in range(3):
+                flake_x = cloud_x - cloud_w//3 + i * (cloud_w//3)
+                flake_y = cloud_y + cloud_h//2 + 5
+                # Simple plus sign for snowflake
+                draw.line([
+                    (flake_x - 2, flake_y),
+                    (flake_x + 2, flake_y)
+                ], fill=0, width=1)
+                draw.line([
+                    (flake_x, flake_y - 2),
+                    (flake_x, flake_y + 2)
+                ], fill=0, width=1)
+                
+        elif weather_data['weather_code'] in [95, 96, 99]:  # Thunderstorm
+            # Cloud with lightning
+            cloud_x, cloud_y = icon_x + icon_size//2, icon_y + icon_size//3
+            cloud_w, cloud_h = icon_size*2//3, icon_size//3
+            # Cloud
+            draw.ellipse([
+                (cloud_x - cloud_w//2, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w//2, cloud_y + cloud_h//2)
+            ], fill=0)
+            draw.ellipse([
+                (cloud_x - cloud_w//4, cloud_y - cloud_h//2),
+                (cloud_x + cloud_w*3//4, cloud_y + cloud_h//2)
+            ], fill=0)
+            # Lightning bolt
+            bolt_x = cloud_x
+            bolt_y = cloud_y + cloud_h//4
+            draw.polygon([
+                (bolt_x, bolt_y - 5),
+                (bolt_x + 3, bolt_y - 5),
+                (bolt_x - 2, bolt_y + 5),
+                (bolt_x + 1, bolt_y + 5),
+                (bolt_x + 6, bolt_y - 5)
+            ], fill=1, outline=0)
+            
+        else:  # Default/unknown weather
+            # Draw a question mark
+            font = ImageFont.load_default()
+            text = "?"
+            text_bbox = draw.textbbox((0, 0), text, font=font)
+            text_width = text_bbox[2] - text_bbox[0]
+            text_height = text_bbox[3] - text_bbox[1]
+            draw.text(
+                (icon_x + (icon_size - text_width)//2, 
+                 icon_y + (icon_size - text_height)//2),
+                text, font=font, fill=0
+            )
+            
+        logger.debug(f"Drew weather icon at ({icon_x}, {icon_y})")
         
         return image
     
@@ -457,6 +657,7 @@ class DisplayManager:
         try:
             # Create the weather image (black/white only)
             image = self.create_weather_image(weather_data)
+            image = image.rotate(180)
             
             if self.epd:
                 # Convert image to display buffer format
