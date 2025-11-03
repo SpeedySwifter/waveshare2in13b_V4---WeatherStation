@@ -1,0 +1,21 @@
+[Unit]
+Description=Raspberry Pi Weather Station with E-Ink Display
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/weather-station
+ExecStart=/usr/bin/python3 /home/pi/weather-station/weather_station.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+# Environment variables (optional)
+# Environment=OPENWEATHER_API_KEY=your_api_key_here
+
+[Install]
+WantedBy=multi-user.target

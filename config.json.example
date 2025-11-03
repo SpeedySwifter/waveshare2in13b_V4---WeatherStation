@@ -1,0 +1,9 @@
+{
+    "api_key": "YOUR_OPENWEATHERMAP_API_KEY_HERE",
+    "city": "Berlin",
+    "country_code": "DE",
+    "update_interval": 30,
+    "display_rotation": 0,
+    "language": "de",
+    "units": "metric"
+}
