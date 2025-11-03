@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Setup script for Raspberry Pi Weather Station
+# Setup script for Raspberry Pi Weather Station with Open-Meteo API
+# No API key required - uses free Open-Meteo weather service
 # Run with: bash setup.sh
 
-echo "=== Raspberry Pi Weather Station Setup ==="
+echo "=== Raspberry Pi Weather Station Setup (Open-Meteo API) ==="
 echo
 
 # Check if running on Raspberry Pi
@@ -45,9 +46,21 @@ sudo usermod -a -G spi,gpio $USER
 # Create config file if it doesn't exist
 echo "6. Setting up configuration..."
 if [ ! -f config.json ]; then
-    cp config.json.example config.json
-    echo "Created config.json from example"
-    echo "Please edit config.json and add your OpenWeatherMap API key!"
+    echo "Creating default config.json..."
+    cat > config.json << EOF
+{
+    "latitude": 54.3091,
+    "longitude": 13.0818,
+    "city": "Stralsund",
+    "country_code": "DE",
+    "update_interval": 30,
+    "display_rotation": 0,
+    "language": "de",
+    "units": "metric"
+}
+EOF
+    echo "Created config.json with default settings"
+    echo "Edit config.json to customize your location coordinates"
 else
     echo "config.json already exists"
 fi
@@ -62,12 +75,11 @@ echo
 echo "=== Setup Complete! ==="
 echo
 echo "Next steps:"
-echo "1. Edit config.json and add your OpenWeatherMap API key"
-echo "2. Get a free API key from: https://openweathermap.org/api"
-echo "3. Connect your Waveshare 2.13\" V4 display"
-echo "4. Reboot your Raspberry Pi: sudo reboot"
-echo "5. Start the service: sudo systemctl start weather-station.service"
-echo "6. Check status: sudo systemctl status weather-station.service"
+echo "1. Edit config.json to customize your location (latitude/longitude)"
+echo "2. Connect your Waveshare 2.13\" V4 display"
+echo "3. Reboot your Raspberry Pi: sudo reboot"
+echo "4. Start the service: sudo systemctl start weather-station.service"
+echo "5. Check status: sudo systemctl status weather-station.service"
 echo
 echo "For manual testing: python3 weather_station.py"
 echo

@@ -66,10 +66,10 @@ fi
 # Check 4: Configuration file
 echo "🔍 Checking configuration..."
 if [ -f "config.json" ]; then
-    if grep -q "YOUR_OPENWEATHERMAP_API_KEY_HERE" config.json 2>/dev/null; then
-        log_issue "API key not configured in config.json"
+    if python3 -c "import json; config=json.load(open('config.json')); exit(0 if 'latitude' in config and 'longitude' in config else 1)" 2>/dev/null; then
+        log_ok "Configuration file exists with coordinates"
     else
-        log_ok "Configuration file exists with API key"
+        log_issue "Configuration missing latitude/longitude coordinates"
     fi
 else
     log_issue "Configuration file missing"

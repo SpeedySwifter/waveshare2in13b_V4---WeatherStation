@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Weather Station for Raspberry Pi Zero 2 with Waveshare 2.13" V4 E-ink Display
-Displays current weather data fetched from OpenWeatherMap API
+Displays current weather data fetched from Open-Meteo API
 """
 
 import time
@@ -26,7 +26,7 @@ class WeatherStation:
     def __init__(self):
         """Initialize the weather station"""
         self.config = Config()
-        self.weather_api = WeatherAPI(self.config.api_key, self.config.city)
+        self.weather_api = WeatherAPI(self.config.latitude, self.config.longitude, self.config.city)
         self.display = DisplayManager()
         logger.info("Weather Station initialized")
     

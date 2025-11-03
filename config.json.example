@@ -1,6 +1,7 @@
 {
-    "api_key": "YOUR_OPENWEATHERMAP_API_KEY_HERE",
-    "city": "Berlin",
+    "latitude": 54.3091,
+    "longitude": 13.0818,
+    "city": "Stralsund",
     "country_code": "DE",
     "update_interval": 30,
     "display_rotation": 0,

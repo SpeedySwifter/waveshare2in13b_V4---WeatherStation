@@ -23,8 +23,9 @@ class Config:
         
         # Default configuration
         self.defaults = {
-            "api_key": "",
-            "city": "Berlin",
+            "latitude": 54.3091,
+            "longitude": 13.0818,
+            "city": "Stralsund",
             "country_code": "DE",
             "update_interval": 30,  # minutes
             "display_rotation": 0,
@@ -69,18 +70,19 @@ class Config:
         self.save_config()
     
     @property
-    def api_key(self):
-        """Get OpenWeatherMap API key"""
-        api_key = self.config_data.get('api_key', '')
-        if not api_key:
-            # Try to get from environment variable
-            api_key = os.getenv('OPENWEATHER_API_KEY', '')
-        return api_key
+    def latitude(self):
+        """Get latitude coordinate"""
+        return self.config_data.get('latitude', 54.3091)
+    
+    @property
+    def longitude(self):
+        """Get longitude coordinate"""
+        return self.config_data.get('longitude', 13.0818)
     
     @property
     def city(self):
         """Get city name"""
-        return self.config_data.get('city', 'Berlin')
+        return self.config_data.get('city', 'Stralsund')
     
     @property
     def country_code(self):

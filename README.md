@@ -1,114 +1,103 @@
-# Raspberry Pi Weather Station mit Waveshare 2.13" V4 E-Ink Display
+# Raspberry Pi Weather Station with Waveshare 2.13" V4 E-Ink Display
 
-Eine Wetterstation für den Raspberry Pi Zero 2 mit Waveshare 2.13" V4 E-Ink Display, die Wetterdaten über die OpenWeatherMap API abruft und anzeigt.
+A weather station for Raspberry Pi Zero 2 with Waveshare 2.13" V4 E-Ink Display that fetches weather data from the free Open-Meteo API.
+
+**🇩🇪 [Deutsche Version / German Version](README_DE.md)**
 
 ## Features
 
-- **E-Ink Display**: Nutzt das Waveshare 2.13" V4 Display (schwarz/weiß)
-- **Wetter API**: Ruft aktuelle Wetterdaten von OpenWeatherMap ab
-- **Deutsche Sprache**: Unterstützt deutsche Wetterberichte
-- **Energieeffizient**: E-Ink Display verbraucht nur beim Update Strom
-- **Automatische Updates**: Konfigurierbare Update-Intervalle
-- **Robuste Fehlerbehandlung**: Logging und Wiederherstellung bei Fehlern
+- **E-Ink Display**: Uses Waveshare 2.13" V4 Display (black/white)
+- **Weather API**: Fetches current weather data from Open-Meteo (free, no API key required)
+- **German Language**: Supports German weather reports
+- **Energy Efficient**: E-Ink display only consumes power during updates
+- **Automatic Updates**: Configurable update intervals
+- **Robust Error Handling**: Logging and recovery on errors
 
-## Hardware Anforderungen
+## Hardware Requirements
 
 - Raspberry Pi Zero 2 W
 - Waveshare 2.13inch e-Paper HAT V4
-- MicroSD Karte (16GB+)
-- Stromversorgung (USB-C)
+- MicroSD Card (16GB+)
+- Power Supply (USB-C)
 
 ## Display Layout
 
-Das 2.13" Display (250x122 Pixel) zeigt folgende Informationen:
+The 2.13" display (250x122 pixels) shows the following information:
 
-- **Datum und Uhrzeit** (oben)
-- **Stadtname**
-- **Temperatur** (groß)
-- **Wetterbeschreibung**
-- **Luftfeuchtigkeit und Luftdruck**
-- **Windgeschwindigkeit und -richtung**
+- **Date and Time** (top)
+- **City Name**
+- **Temperature** (large)
+- **Weather Description**
+- **Humidity and Pressure**
+- **Wind Speed and Direction**
 
 ## Quick Start
 
-Für eine schnelle Installation verwende das automatische Setup-Script:
+For quick installation, use the automatic setup script:
 
 ```bash
-# Projekt klonen
+# Clone project
 git clone https://github.com/SpeedySwifter/waveshare2in13b_V4---WeatherStation.git weather-station
 cd weather-station
 
-# Automatisches Setup ausführen
+# Run automatic setup
 bash setup.sh
 
-# API Key in config.json eintragen
+# Adjust coordinates in config.json (optional)
 nano config.json
 
-# System neustarten
+# Reboot system
 sudo reboot
 ```
 
-## Detaillierte Installation
+## Detailed Installation
 
-### 1. Projekt klonen
+### 1. Clone Project
 
 ```bash
-cd ~
 git clone https://github.com/SpeedySwifter/waveshare2in13b_V4---WeatherStation.git weather-station
 cd weather-station
 ```
 
-### 2. Automatisches Setup (empfohlen)
-
-Das `setup.sh` Script installiert automatisch alle Abhängigkeiten:
+### 2. Prepare Raspberry Pi OS
 
 ```bash
-bash setup.sh
-```
-
-Das Script führt folgende Schritte aus:
-- System-Updates
-- Installation aller Python-Abhängigkeiten
-- SPI-Interface aktivieren
-- Benutzer zu spi/gpio Gruppen hinzufügen
-- Systemd Service installieren
-- Beispiel-Konfiguration erstellen
-
-### 3. Manuelle Installation
-
-Falls du die Installation manuell durchführen möchtest:
-
-```bash
-# System aktualisieren
+# Update system
 sudo apt update && sudo apt upgrade -y
 
-# Abhängigkeiten installieren
+# Install git (if not present)
+sudo apt install -y git
+```
+
+### 3. Install Dependencies
+
+```bash
+# Install Python and required packages
 sudo apt install -y python3 python3-pip python3-venv git python3-dev libjpeg-dev zlib1g-dev libfreetype-dev liblcms2-dev libopenjp2-7-dev libtiff-dev python3-pil python3-requests python3-rpi.gpio python3-spidev
 
-# SPI aktivieren
+# Enable SPI
 sudo raspi-config
 # Interface Options -> SPI -> Enable
 
-# Benutzer zu Gruppen hinzufügen
+# Add user to groups
 sudo usermod -a -G spi,gpio $USER
 ```
 
-### 4. OpenWeatherMap API Key
+### 4. Configuration
 
-1. Registriere dich bei [OpenWeatherMap](https://openweathermap.org/api)
-2. Erstelle einen kostenlosen API Key
-3. Kopiere die Beispiel-Konfiguration:
+Copy the example configuration and customize it:
 
 ```bash
 cp config.json.example config.json
 ```
 
-4. Bearbeite `config.json` und füge deinen API Key ein:
+Edit `config.json` and adjust coordinates for your location:
 
 ```json
 {
-    "api_key": "dein_api_key_hier",
-    "city": "Berlin",
+    "latitude": 54.3091,
+    "longitude": 13.0818,
+    "city": "Stralsund",
     "country_code": "DE",
     "update_interval": 30,
     "display_rotation": 0,
@@ -117,14 +106,19 @@ cp config.json.example config.json
 }
 ```
 
-### 5. Hardware Verbindung
+**Finding Coordinates:**
+- Use [OpenStreetMap](https://www.openstreetmap.org/) or Google Maps
+- Click on your desired location
+- Copy the Latitude and Longitude values
 
-Verbinde das Waveshare 2.13" V4 Display mit dem Raspberry Pi:
+### 5. Hardware Connection
 
-| Display Pin | Pi Pin | Funktion |
+Connect the Waveshare 2.13" V4 Display to the Raspberry Pi:
+
+| Display Pin | Pi Pin | Function |
 |-------------|--------|----------|
-| VCC | 3.3V | Stromversorgung |
-| GND | GND | Masse |
+| VCC | 3.3V | Power Supply |
+| GND | GND | Ground |
 | DIN | GPIO 10 (MOSI) | SPI Data |
 | CLK | GPIO 11 (SCLK) | SPI Clock |
 | CS | GPIO 8 (CE0) | Chip Select |
@@ -132,157 +126,141 @@ Verbinde das Waveshare 2.13" V4 Display mit dem Raspberry Pi:
 | RST | GPIO 17 | Reset |
 | BUSY | GPIO 24 | Busy Signal |
 
-## Verwendung
+## Usage
 
-### Manueller Start
+### Manual Start
 
 ```bash
 python3 weather_station.py
 ```
 
-### Als Systemdienst (empfohlen)
-
-Wenn du das `setup.sh` Script verwendet hast, ist der Service bereits installiert:
+### Install as Service
 
 ```bash
-# Service starten
+# Install service
+sudo cp weather-station.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable weather-station.service
+
+# Start service
 sudo systemctl start weather-station.service
 
-# Status prüfen
+# Check status
 sudo systemctl status weather-station.service
 ```
 
-#### Manuelle Service Installation
-
-Falls du den Service manuell installieren möchtest:
+### Manage Service
 
 ```bash
-# Service-Datei kopieren
-sudo cp weather-station.service /etc/systemd/system/
+# Stop service
+sudo systemctl stop weather-station.service
 
-# Service aktivieren und starten
+# Restart service
+sudo systemctl restart weather-station.service
+
+# Enable and start service
 sudo systemctl daemon-reload
 sudo systemctl enable weather-station.service
 sudo systemctl start weather-station.service
 ```
 
-## Konfiguration
+## Configuration
 
-### config.json Parameter
+### config.json Parameters
 
-- **api_key**: OpenWeatherMap API Schlüssel
-- **city**: Stadt für Wetterdaten (z.B. "Berlin", "München")
-- **country_code**: Ländercode (z.B. "DE")
-- **update_interval**: Update-Intervall in Minuten (Standard: 30)
-- **display_rotation**: Display-Rotation in Grad (0, 90, 180, 270)
-- **language**: Sprache für Wetterbeschreibungen ("de", "en")
-- **units**: Einheiten ("metric" für Celsius, "imperial" für Fahrenheit)
+- **latitude**: Location latitude (e.g. 54.3091)
+- **longitude**: Location longitude (e.g. 13.0818)
+- **city**: City for display (e.g. "Stralsund", "Berlin")
+- **country_code**: Country code (e.g. "DE")
+- **update_interval**: Update interval in minutes (default: 30)
+- **display_rotation**: Display rotation in degrees (0, 90, 180, 270)
+- **language**: Language for weather descriptions ("de", "en")
+- **units**: Units ("metric" for Celsius, "imperial" for Fahrenheit)
 
-### Umgebungsvariablen
-
-Alternativ zum config.json kann der API Key als Umgebungsvariable gesetzt werden:
-
-```bash
-export OPENWEATHER_API_KEY="dein_api_key_hier"
-```
-
-## Zusätzliche Scripts
+## Additional Scripts
 
 ### setup.sh
-Automatisches Setup-Script für die komplette Installation:
+Automatic setup script for complete installation:
 ```bash
 bash setup.sh
 ```
 
-### install_autostart.sh
-Installiert und konfiguriert den Autostart-Service:
-```bash
-bash install_autostart.sh
-```
-
 ### health_check.sh
-Überprüft den Status der Wetterstation und startet sie bei Bedarf neu:
+Checks weather station status and restarts if needed:
 ```bash
 bash health_check.sh
 ```
 
-### run_weather_station.sh
-Wrapper-Script zum Starten der Wetterstation:
-```bash
-bash run_weather_station.sh
-```
-
-## Projektstruktur
+## Project Structure
 
 ```
 weather-station/
-├── weather_station.py          # Hauptprogramm
-├── weather_api.py             # OpenWeatherMap API Interface
-├── display_manager.py         # E-Ink Display Management
-├── config.py                  # Konfiguration laden
-├── config.json.example        # Beispiel-Konfiguration
-├── requirements.txt           # Python-Abhängigkeiten
-├── weather-station.service    # Systemd Service
-├── setup.sh                   # Automatisches Setup
-├── install_autostart.sh       # Autostart Installation
-├── health_check.sh           # Status-Überwachung
-├── run_weather_station.sh    # Start-Script
-├── waveshare_epd/            # Display-Treiber
-└── README.md                 # Diese Datei
+├── weather_station.py          # Main program
+├── weather_api.py             # Open-Meteo API interface
+├── display_manager.py         # E-Ink display management
+├── config.py                  # Configuration loader
+├── config.json.example        # Example configuration
+├── requirements.txt           # Python dependencies
+├── weather-station.service    # Systemd service
+├── setup.sh                   # Automatic setup
+├── health_check.sh           # Status monitoring
+├── waveshare_epd/            # Display drivers
+├── README.md                 # English documentation
+├── README_DE.md              # German documentation
+└── .gitignore               # Git ignore rules
 ```
 
-## Logs und Debugging
+## Logs and Debugging
 
-Logs werden in `weather_station.log` gespeichert:
+Logs are stored in `weather_station.log`:
 
 ```bash
-# Live-Logs anzeigen
+# View live logs
 tail -f weather_station.log
 
-# Service-Logs anzeigen
+# View service logs
 sudo journalctl -u weather-station.service -f
+
+# Show recent errors
+sudo journalctl -u weather-station.service --since "1 hour ago"
 ```
 
-## Entwicklung und Testing
+### Common Issues
 
-Für Entwicklung ohne Hardware:
+1. **SPI not enabled**: `sudo raspi-config` → Interface Options → SPI → Enable
+2. **Permission errors**: Add user to groups: `sudo usermod -a -G spi,gpio $USER`
+3. **Display shows nothing**: Check hardware connections
+4. **Service won't start**: Check logs: `sudo journalctl -u weather-station.service`
+
+## Development
+
+### Local Testing
 
 ```bash
-# Erstellt PNG-Dateien statt E-Ink Display zu verwenden
+# Install dependencies
+pip3 install -r requirements.txt
+
+# Start weather station
 python3 weather_station.py
 ```
 
-Die generierten Bilder werden als `weather_display.png` gespeichert.
+### Code Structure
 
-## Troubleshooting
+- `weather_station.py`: Main program and coordination
+- `weather_api.py`: Open-Meteo API integration
+- `display_manager.py`: E-Ink display control
+- `config.py`: Configuration management
 
-### Display funktioniert nicht
+## License
 
-1. SPI aktiviert? `sudo raspi-config`
-2. Korrekte Verkabelung prüfen
-3. Berechtigungen: `sudo usermod -a -G spi,gpio pi`
+This project is licensed under the MIT License. See LICENSE file for details.
 
-### API Fehler
+## Contributing
 
-1. API Key korrekt? Teste mit: `curl "http://api.openweathermap.org/data/2.5/weather?q=Berlin&appid=DEIN_API_KEY"`
-2. Internetverbindung prüfen
-3. API Limits erreicht? (1000 Aufrufe/Tag kostenlos)
+Contributions are welcome! Please create a pull request or open an issue.
 
-### Service startet nicht
+## Acknowledgments
 
-```bash
-# Logs prüfen
-sudo journalctl -u weather-station.service -n 50
-
-# Manuell testen
-cd /home/pi/weather-station
-python3 weather_station.py
-```
-
-## Lizenz
-
-MIT License - siehe LICENSE Datei für Details.
-
-## Beiträge
-
-Pull Requests und Issues sind willkommen! Bitte erstelle ein Issue bevor du größere Änderungen vornimmst.
+- [Open-Meteo](https://open-meteo.com/) for the free weather API
+- [Waveshare](https://www.waveshare.com/) for the E-Ink display hardware
+- Raspberry Pi Foundation for the amazing hardware platform

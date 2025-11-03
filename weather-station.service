@@ -43,8 +43,7 @@ ReadWritePaths=/home/pi/weather-station
 MemoryMax=256M
 CPUQuota=50%
 
-# Environment variables (optional)
-# Environment=OPENWEATHER_API_KEY=your_api_key_here
+# Environment variables
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
