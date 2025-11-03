@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 class DisplayManager:
     def __init__(self):
         """Initialize the display manager"""
+        # Use landscape orientation like working Pwnagotchi code (250x122)
         self.width = 250
         self.height = 122
         self.epd = None
@@ -31,13 +32,13 @@ class DisplayManager:
         if epd2in13_V4:
             try:
                 self.epd = epd2in13_V4.EPD()
-                # Test if SPI is available and display is connected
-                import os
-                if os.path.exists('/dev/spidev0.0'):
+                
+                # Comprehensive SPI verification as per Waveshare documentation
+                if self._verify_spi_setup():
                     self.epd.init()
                     logger.info("E-paper display (regular B/W) initialized successfully")
                 else:
-                    logger.warning("SPI device not found, running in development mode")
+                    logger.warning("SPI verification failed, running in development mode")
                     self.epd = None
             except Exception as e:
                 logger.error(f"Failed to initialize e-paper display: {e}")
@@ -45,6 +46,45 @@ class DisplayManager:
                 self.epd = None
         else:
             logger.warning("E-paper display module not available (development mode)")
+    
+    def _verify_spi_setup(self):
+        """Verify SPI setup according to Waveshare documentation"""
+        import glob
+        
+        # Check if SPI devices exist
+        spi_devices = glob.glob('/dev/spidev*')
+        if not spi_devices:
+            logger.error("No SPI devices found. Enable SPI with: sudo raspi-config")
+            return False
+        
+        # Check for expected SPI devices (spidev0.0 and spidev0.1)
+        expected_devices = ['/dev/spidev0.0', '/dev/spidev0.1']
+        found_devices = [dev for dev in expected_devices if os.path.exists(dev)]
+        
+        if len(found_devices) < 2:
+            logger.warning(f"Expected SPI devices: {expected_devices}")
+            logger.warning(f"Found SPI devices: {spi_devices}")
+            logger.warning("SPI may be partially configured or occupied by other drivers")
+        
+        # Check if SPI is enabled in boot config
+        try:
+            with open('/boot/config.txt', 'r') as f:
+                config_content = f.read()
+                if 'dtparam=spi=on' not in config_content:
+                    logger.warning("SPI not enabled in /boot/config.txt. Run: sudo raspi-config")
+                    return False
+        except FileNotFoundError:
+            logger.warning("Could not verify /boot/config.txt (may not be on Raspberry Pi)")
+        except PermissionError:
+            logger.warning("Permission denied reading /boot/config.txt")
+        
+        # At minimum, we need spidev0.0 for the display
+        if os.path.exists('/dev/spidev0.0'):
+            logger.info(f"SPI verification passed. Available devices: {spi_devices}")
+            return True
+        else:
+            logger.error("Primary SPI device /dev/spidev0.0 not found")
+            return False
     
     def get_font(self, size=12):
         """Get font for text rendering"""
@@ -59,12 +99,12 @@ class DisplayManager:
                 return ImageFont.load_default()
     
     def create_weather_image(self, weather_data):
-        """Create weather display image (black/white only)"""
-        # Create image for black/white display
+        """Create weather display image (black/white only) - Landscape layout for 250x122"""
+        # Create image with natural dimensions - official driver handles rotation
         image = Image.new('1', (self.width, self.height), 255)
         draw = ImageDraw.Draw(image)
         
-        # Fonts
+        # Fonts for landscape layout
         font_large = self.get_font(24)
         font_medium = self.get_font(16)
         font_small = self.get_font(12)
@@ -73,44 +113,47 @@ class DisplayManager:
         current_time = datetime.now().strftime("%H:%M")
         current_date = datetime.now().strftime("%d.%m.%Y")
         
-        # Layout positions
-        y_pos = 5
+        # Layout for landscape display (250x122)
+        margin = 5
         
-        # Date and time
-        draw.text((5, y_pos), current_date, font=font_small, fill=0)
-        draw.text((self.width - 60, y_pos), current_time, font=font_small, fill=0)
-        y_pos += 20
+        # Top row - Date and time
+        draw.text((margin, margin), current_date, font=font_small, fill=0)
+        time_width = draw.textbbox((0, 0), current_time, font=font_small)[2]
+        draw.text((self.width - time_width - margin, margin), current_time, font=font_small, fill=0)
         
         # City name
         city = weather_data.get('city', 'Unknown')
-        draw.text((5, y_pos), city, font=font_medium, fill=0)
-        y_pos += 25
+        draw.text((margin, 20), city, font=font_medium, fill=0)
         
-        # Temperature (large text since we can't use red)
+        # Temperature (large, prominent)
         temp = weather_data.get('temperature', 0)
         temp_text = f"{temp:.1f}°C"
-        draw.text((5, y_pos), temp_text, font=font_large, fill=0)
-        y_pos += 30
+        draw.text((margin, 45), temp_text, font=font_large, fill=0)
         
         # Weather description
         description = weather_data.get('description', 'Unknown')
-        draw.text((5, y_pos), description.title(), font=font_medium, fill=0)
-        y_pos += 20
+        if len(description) > 20:
+            description = description[:20] + "..."
+        draw.text((margin, 75), description.title(), font=font_medium, fill=0)
         
-        # Additional info
+        # Right side - Additional info
+        right_x = 130
         humidity = weather_data.get('humidity', 0)
         pressure = weather_data.get('pressure', 0)
-        
-        draw.text((5, y_pos), f"Luftfeuchtigkeit: {humidity}%", font=font_small, fill=0)
-        y_pos += 15
-        draw.text((5, y_pos), f"Luftdruck: {pressure} hPa", font=font_small, fill=0)
-        
-        # Wind info (right side)
         wind_speed = weather_data.get('wind_speed', 0)
         wind_dir = weather_data.get('wind_direction', 0)
-        draw.text((130, 45), f"Wind:", font=font_small, fill=0)
-        draw.text((130, 60), f"{wind_speed:.1f} m/s", font=font_small, fill=0)
-        draw.text((130, 75), f"{wind_dir}°", font=font_small, fill=0)
+        
+        draw.text((right_x, 20), f"Luftfeuchtigkeit:", font=font_small, fill=0)
+        draw.text((right_x, 32), f"{humidity}%", font=font_small, fill=0)
+        
+        draw.text((right_x, 50), f"Luftdruck:", font=font_small, fill=0)
+        draw.text((right_x, 62), f"{pressure} hPa", font=font_small, fill=0)
+        
+        draw.text((right_x, 80), f"Wind: {wind_speed:.1f}m/s", font=font_small, fill=0)
+        draw.text((right_x, 92), f"Richtung: {wind_dir}°", font=font_small, fill=0)
+        
+        # Separator line
+        draw.line([(120, 20), (120, 110)], fill=0, width=1)
         
         return image
     

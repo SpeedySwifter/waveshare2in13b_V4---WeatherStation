@@ -1,4 +1,13 @@
+# Core dependencies for weather station
 requests>=2.28.0
+
+# Image processing and display
 Pillow>=9.0.0
+numpy>=1.21.0
+
+# Raspberry Pi GPIO and SPI communication
 RPi.GPIO>=0.7.1
 spidev>=3.5
+
+# Additional system dependencies (install via apt):
+# sudo apt-get install python3-pip python3-pil python3-numpy python3-gpiozero

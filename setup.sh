@@ -18,9 +18,11 @@ fi
 echo "1. Updating system packages..."
 sudo apt update && sudo apt upgrade -y
 
-# Install required system packages
+# Install required system packages (including Waveshare recommendations)
 echo "2. Installing required packages..."
-sudo apt install -y python3 python3-pip python3-venv git python3-dev libjpeg-dev zlib1g-dev libfreetype-dev liblcms2-dev libopenjp2-7-dev libtiff-dev python3-pil python3-requests python3-rpi.gpio python3-spidev
+sudo apt install -y python3 python3-pip python3-venv git python3-dev \
+    libjpeg-dev zlib1g-dev libfreetype-dev liblcms2-dev libopenjp2-7-dev libtiff-dev \
+    python3-pil python3-numpy python3-requests python3-rpi.gpio python3-spidev python3-gpiozero
 
 # Install Python dependencies
 echo "3. Installing Python dependencies..."
@@ -78,8 +80,10 @@ echo "Next steps:"
 echo "1. Edit config.json to customize your location (latitude/longitude)"
 echo "2. Connect your Waveshare 2.13\" V4 display"
 echo "3. Reboot your Raspberry Pi: sudo reboot"
-echo "4. Start the service: sudo systemctl start weather-station.service"
-echo "5. Check status: sudo systemctl status weather-station.service"
+echo "4. Test hardware setup: python3 hardware_test.py"
+echo "5. Start the service: sudo systemctl start weather-station.service"
+echo "6. Check status: sudo systemctl status weather-station.service"
 echo
 echo "For manual testing: python3 weather_station.py"
+echo "For hardware verification: python3 hardware_test.py"
 echo
