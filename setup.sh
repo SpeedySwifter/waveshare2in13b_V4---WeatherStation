@@ -19,7 +19,7 @@ sudo apt update && sudo apt upgrade -y
 
 # Install required system packages
 echo "2. Installing required packages..."
-sudo apt install -y python3 python3-pip git
+sudo apt install -y python3 python3-pip git python3-dev libjpeg-dev zlib1g-dev libfreetype-dev liblcms2-dev libopenjp2-7-dev libtiff-dev python3-pil
 
 # Install Python dependencies
 echo "3. Installing Python dependencies..."
