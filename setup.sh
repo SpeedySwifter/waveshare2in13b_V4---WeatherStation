@@ -45,8 +45,77 @@ fi
 echo "5. Adding user to spi and gpio groups..."
 sudo usermod -a -G spi,gpio $USER
 
+# SSH Configuration Fix for Raspberry Pi Zero 2
+echo "6. Configuring SSH for Raspberry Pi Zero 2..."
+
+# Enable SSH service
+echo "   - Enabling SSH service..."
+sudo systemctl enable ssh
+sudo systemctl start ssh
+
+# Create SSH directory if it doesn't exist
+if [ ! -d "/home/$USER/.ssh" ]; then
+    mkdir -p /home/$USER/.ssh
+    chmod 700 /home/$USER/.ssh
+    chown $USER:$USER /home/$USER/.ssh
+fi
+
+# Fix SSH configuration for better compatibility
+echo "   - Optimizing SSH configuration..."
+sudo tee -a /etc/ssh/sshd_config.d/99-pi-zero-2-fix.conf > /dev/null << EOF
+# SSH Configuration fixes for Raspberry Pi Zero 2
+# Improve connection stability and compatibility
+
+# Allow password authentication (can be disabled later for security)
+PasswordAuthentication yes
+PubkeyAuthentication yes
+
+# Increase connection limits
+MaxAuthTries 6
+MaxSessions 10
+
+# Optimize for slower hardware
+LoginGraceTime 120
+ClientAliveInterval 60
+ClientAliveCountMax 3
+
+# Enable compression to help with slower connections
+Compression yes
+
+# Allow root login with key only (more secure)
+PermitRootLogin prohibit-password
+
+# Disable DNS lookups to speed up connections
+UseDNS no
+
+# Set proper ciphers for Pi Zero 2 performance
+Ciphers aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com
+MACs hmac-sha2-256,hmac-sha2-512,hmac-sha1
+
+# Keep connections alive
+TCPKeepAlive yes
+EOF
+
+# Restart SSH service to apply changes
+echo "   - Restarting SSH service..."
+sudo systemctl restart ssh
+
+# Check if SSH is running
+if sudo systemctl is-active --quiet ssh; then
+    echo "   ✓ SSH service is running"
+else
+    echo "   ⚠ SSH service failed to start - check logs with: sudo journalctl -u ssh"
+fi
+
+# Display SSH connection info
+echo "   - SSH connection information:"
+echo "     Default username: $USER"
+echo "     SSH port: 22"
+echo "     To connect: ssh $USER@<pi-ip-address>"
+echo "     Find IP with: hostname -I"
+
 # Create config file if it doesn't exist
-echo "6. Setting up configuration..."
+echo "7. Setting up configuration..."
 if [ ! -f config.json ]; then
     echo "Creating default config.json..."
     cat > config.json << EOF
@@ -68,7 +137,7 @@ else
 fi
 
 # Install systemd service
-echo "7. Installing systemd service..."
+echo "8. Installing systemd service..."
 sudo cp weather-station.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable weather-station.service

@@ -185,6 +185,12 @@ Automatic setup script for complete installation:
 bash setup.sh
 ```
 
+### ssh_fix.sh
+Standalone SSH configuration fix for Raspberry Pi Zero 2:
+```bash
+bash ssh_fix.sh
+```
+
 ### health_check.sh
 Checks weather station status and restarts if needed:
 ```bash
@@ -203,6 +209,7 @@ weather-station/
 ├── requirements.txt           # Python dependencies
 ├── weather-station.service    # Systemd service
 ├── setup.sh                   # Automatic setup
+├── ssh_fix.sh                 # SSH configuration fix for Pi Zero 2
 ├── health_check.sh           # Status monitoring
 ├── waveshare_epd/            # Display drivers
 ├── README.md                 # English documentation
@@ -231,6 +238,81 @@ sudo journalctl -u weather-station.service --since "1 hour ago"
 2. **Permission errors**: Add user to groups: `sudo usermod -a -G spi,gpio $USER`
 3. **Display shows nothing**: Check hardware connections
 4. **Service won't start**: Check logs: `sudo journalctl -u weather-station.service`
+
+### SSH Troubleshooting (Raspberry Pi Zero 2)
+
+The setup script automatically configures SSH for optimal performance on Raspberry Pi Zero 2. For standalone SSH fixes, you can also run:
+
+```bash
+bash ssh_fix.sh
+```
+
+If you encounter SSH connection issues:
+
+#### **SSH Connection Problems**
+```bash
+# Check if SSH service is running
+sudo systemctl status ssh
+
+# Restart SSH service
+sudo systemctl restart ssh
+
+# Enable SSH if disabled
+sudo systemctl enable ssh
+sudo systemctl start ssh
+```
+
+#### **Find Your Pi's IP Address**
+```bash
+# On the Pi itself
+hostname -I
+
+# From your router's admin panel
+# Look for "raspberrypi" or your custom hostname
+
+# Network scan from another device
+nmap -sn 192.168.1.0/24  # Adjust subnet as needed
+```
+
+#### **Connection Commands**
+```bash
+# Basic SSH connection
+ssh pi@<pi-ip-address>
+
+# With specific port (if changed)
+ssh -p 22 pi@<pi-ip-address>
+
+# Verbose output for debugging
+ssh -v pi@<pi-ip-address>
+```
+
+#### **SSH Key Setup (Recommended)**
+```bash
+# Generate SSH key on your computer
+ssh-keygen -t rsa -b 4096
+
+# Copy key to Pi
+ssh-copy-id pi@<pi-ip-address>
+
+# Or manually copy key
+cat ~/.ssh/id_rsa.pub | ssh pi@<pi-ip-address> 'mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys'
+```
+
+#### **Performance Optimization**
+The setup script applies these SSH optimizations for Pi Zero 2:
+- **Compression enabled** for slower connections
+- **DNS lookups disabled** for faster connection establishment
+- **Keep-alive settings** to maintain stable connections
+- **Optimized ciphers** for better performance on ARM hardware
+
+#### **Security Notes**
+- Default setup allows password authentication for initial setup
+- Consider disabling password auth after setting up SSH keys:
+  ```bash
+  sudo nano /etc/ssh/sshd_config.d/99-pi-zero-2-fix.conf
+  # Change: PasswordAuthentication no
+  sudo systemctl restart ssh
+  ```
 
 ## Development
 
