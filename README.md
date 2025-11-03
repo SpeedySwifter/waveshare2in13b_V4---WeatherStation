@@ -22,14 +22,51 @@ A weather station for Raspberry Pi Zero 2 with Waveshare 2.13" V4 E-Ink Display 
 
 ## Display Layout
 
-The 2.13" display (250x122 pixels) shows the following information:
+The 2.13" display (250x122 pixels) features a modern, clean design with:
 
-- **Date and Time** (top)
-- **City Name**
-- **Temperature** (large)
-- **Weather Description**
-- **Humidity and Pressure**
-- **Wind Speed and Direction**
+### **Header Section**
+- **Black header bar** with white text
+- **Date and weekday** (left side)
+- **Current time** (right side)
+
+### **Main Content**
+- **City name** with decorative underline
+- **Large temperature** display (prominent)
+- **Weather icon** (Unicode symbols for different conditions)
+- **Weather description** in German
+
+### **Details Panel**
+- **Bordered information box** with:
+  - 💧 **Humidity** percentage
+  - 📊 **Air pressure** in hPa
+  - 💨 **Wind speed** in m/s
+  - 🧭 **Wind direction** in degrees
+
+### **Design Features**
+- **Professional SVG weather icons** with ASCII art fallback
+- **Merriweather Sans typography** with multiple font weights
+- **Day/night weather variations** (sun/moon based on time)
+- **Typography hierarchy** with proper font weights (light, regular, medium, semibold, bold)
+- **Decorative corner elements**
+- **Clean borders and separators**
+- **Optimized for e-ink display** (black/white only)
+
+### **Weather Icons**
+The system uses high-quality SVG icons from the `icons/` folder:
+- **Clear sky**: Different icons for day (sun) and night (moon)
+- **Cloudy conditions**: Various cloud densities (1-3 levels)
+- **Precipitation**: Rain, snow, and mixed conditions
+- **Special weather**: Fog, thunderstorms, severe weather
+- **Automatic fallback**: ASCII art if SVG support unavailable
+
+### **Typography**
+Professional Merriweather Sans font family with multiple weights:
+- **Light**: Small details and secondary information
+- **Regular**: Standard text and labels
+- **Medium**: Weather descriptions and medium emphasis
+- **SemiBold**: City names and section headers
+- **Bold**: Large temperature display and primary emphasis
+- **Automatic fallback**: System fonts if Merriweather Sans unavailable
 
 ## Quick Start
 
@@ -191,6 +228,18 @@ Standalone SSH configuration fix for Raspberry Pi Zero 2:
 bash ssh_fix.sh
 ```
 
+### test_new_design.py
+Preview the modern display design without hardware:
+```bash
+python3 test_new_design.py
+```
+
+### install_svg_support.sh
+Install SVG icon support (optional for better icons):
+```bash
+bash install_svg_support.sh
+```
+
 ### health_check.sh
 Checks weather station status and restarts if needed:
 ```bash
@@ -203,14 +252,18 @@ bash health_check.sh
 weather-station/
 ├── weather_station.py          # Main program
 ├── weather_api.py             # Open-Meteo API interface
-├── display_manager.py         # E-Ink display management
+├── display_manager.py         # E-Ink display management (modern design)
 ├── config.py                  # Configuration loader
 ├── config.json.example        # Example configuration
 ├── requirements.txt           # Python dependencies
 ├── weather-station.service    # Systemd service
 ├── setup.sh                   # Automatic setup
 ├── ssh_fix.sh                 # SSH configuration fix for Pi Zero 2
+├── test_new_design.py         # Design preview generator
+├── install_svg_support.sh     # SVG icon support installer
 ├── health_check.sh           # Status monitoring
+├── icons/                    # SVG weather icon assets
+├── Merriweather_Sans/        # Professional font family
 ├── waveshare_epd/            # Display drivers
 ├── README.md                 # English documentation
 ├── README_DE.md              # German documentation
@@ -322,8 +375,24 @@ The setup script applies these SSH optimizations for Pi Zero 2:
 # Install dependencies
 pip3 install -r requirements.txt
 
+# Test the new display design
+python3 test_new_design.py
+
 # Start weather station
 python3 weather_station.py
+```
+
+### Design Preview
+
+To preview the new interface design without hardware:
+
+```bash
+# Generate preview images
+python3 test_new_design.py
+
+# View generated files:
+# - weather_display_new_design.png (day mode)
+# - weather_display_night_design.png (night mode)
 ```
 
 ### Code Structure

@@ -37,7 +37,7 @@ class WeatherAPI:
             params = {
                 'latitude': self.latitude,
                 'longitude': self.longitude,
-                'current': 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m',
+                'current': 'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,surface_pressure,wind_speed_10m,wind_direction_10m,is_day',
                 'timezone': 'Europe/Berlin',
                 'forecast_days': 1
             }
@@ -75,6 +75,8 @@ class WeatherAPI:
                 'humidity': current['relative_humidity_2m'],
                 'pressure': current['surface_pressure'],
                 'description': description,
+                'weather_code': weather_code,
+                'is_day': current.get('is_day', 1) == 1,  # Convert to boolean
                 'icon': self._get_weather_icon(weather_code),
                 'wind_speed': current['wind_speed_10m'],
                 'wind_direction': current['wind_direction_10m'],
